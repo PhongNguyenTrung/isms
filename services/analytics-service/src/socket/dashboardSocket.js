@@ -1,4 +1,6 @@
 const { Server } = require('socket.io');
+const { redisClient } = require('../config/redis');
+const MetricsAggregator = require('../services/MetricsAggregator');
 
 let io;
 
@@ -6,6 +8,9 @@ const initSocket = (server) => {
   io = new Server(server, {
     cors: { origin: '*' }
   });
+
+  // Inject broadcast function into the domain service
+  MetricsAggregator.setBroadcastFn(broadcastMetricUpdate);
 
   io.on('connection', (socket) => {
     console.log('Client connected to Analytics Dashboard:', socket.id);
@@ -18,9 +23,17 @@ const initSocket = (server) => {
 };
 
 const buildInitialState = async (socket) => {
-  // Push full state down to the client immediately upon connection
-  // E.g. retrieving current cached values from Redis via MetricsAggregator check
-  // For now, we omit the direct fetching loop for simplicity
+  try {
+    const activeOrders = await redisClient.get('metric:active_orders');
+    const dailyRevenue = await redisClient.get('metric:daily_revenue');
+
+    socket.emit('initial_state', {
+      active_orders: activeOrders ? Number(activeOrders) : 0,
+      daily_revenue: dailyRevenue ? Number(dailyRevenue) : 0,
+    });
+  } catch (err) {
+    console.error('Error loading initial dashboard state:', err);
+  }
 };
 
 /**
@@ -33,3 +46,4 @@ const broadcastMetricUpdate = (metricName, payload) => {
 };
 
 module.exports = { initSocket, broadcastMetricUpdate };
+
