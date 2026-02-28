@@ -1,5 +1,5 @@
 const { Kafka } = require('kafkajs');
-const { writeTelemetry } = require('./influxdb');
+const TelemetryProcessor = require('../services/TelemetryProcessor');
 
 const brokers = process.env.KAFKA_BROKERS ? process.env.KAFKA_BROKERS.split(',') : ['localhost:9092'];
 
@@ -24,12 +24,8 @@ const connectKafka = async () => {
         const payload = JSON.parse(message.value.toString());
         const { sensorId, type, value, unit } = payload;
 
-        // 1. Write the raw telemetry to InfluxDB
-        writeTelemetry(sensorId, type, value, unit);
-        // console.log(`Persisted ${type} telemetry for ${sensorId} to InfluxDB: ${value} ${unit}`);
-
-        // 2. Threshold Checking logic
-        await checkThresholdsAndAlert(sensorId, type, value, unit);
+        // Delegate all domain logic to the TelemetryProcessor service
+        await TelemetryProcessor.processTelemetry(sensorId, type, value, unit);
       },
     });
   } catch (error) {
@@ -48,32 +44,4 @@ const publishEvent = async (topic, key, message) => {
   }
 };
 
-// Extremely basic mocked thresholds for FR10 (Low Stock) and FR11 (Temperature)
-const checkThresholdsAndAlert = async (sensorId, type, value, unit) => {
-  if (type === 'weight') {
-    // If weight falls below 10kg, fire an InventoryLow alert
-    if (value < 10 && unit === 'kg') {
-      const alertPayload = {
-        ingredientId: sensorId,
-        level: value,
-        unit,
-        timestamp: new Date().toISOString()
-      };
-      await publishEvent('alerts', `alert-low-stock-${sensorId}`, { type: 'InventoryLow', data: alertPayload });
-    }
-  } else if (type === 'temperature') {
-    // If temperature exceeds 6 celsius (e.g. for Walk-in Cooler), fire a TemperatureAlert
-    if (value > 6 && unit === 'C') {
-      const alertPayload = {
-        sensorId,
-        temp: value,
-        unit,
-        location: 'Walk-in Cooler',
-        timestamp: new Date().toISOString()
-      };
-      await publishEvent('alerts', `alert-temp-${sensorId}`, { type: 'TemperatureAlert', data: alertPayload });
-    }
-  }
-};
-
-module.exports = { connectKafka };
+module.exports = { connectKafka, producer };
