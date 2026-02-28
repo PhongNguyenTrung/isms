@@ -1,39 +1,47 @@
 const alertRepo = require('../repositories/AlertHistoryRepository');
+const EmailChannel = require('../channels/EmailChannel');
+const SmsChannel = require('../channels/SmsChannel');
+const PushChannel = require('../channels/PushChannel');
+
+/**
+ * Alert routing configuration.
+ * Maps event types to the channels they should be dispatched through.
+ * Adding a new alert type only requires a new entry here (Open/Closed Principle).
+ */
+const ALERT_ROUTING = {
+  KitchenOverload: [
+    { channel: PushChannel, target: 'ManagerDashboard' }
+  ],
+  InventoryLow: [
+    { channel: EmailChannel, target: 'manager@restaurant.com' },
+    { channel: PushChannel, target: 'ManagerDashboard' }
+  ],
+  TemperatureAlert: [
+    { channel: SmsChannel, target: '+1234567890' },
+    { channel: EmailChannel, target: 'manager@restaurant.com' },
+    { channel: PushChannel, target: 'ManagerDashboard' }
+  ],
+};
 
 class AlertDispatcher {
   async processAlert(eventType, payload) {
-    // 1. Save alert to history
     const alertRecord = await alertRepo.saveAlert(eventType, payload, 'PENDING');
 
-    // 2. Dispatch based on severity/type (Mocked implementations)
-    console.log(`[AlertDispatcher] Received ${eventType} alert. Details:`, payload);
+    console.log(`[AlertDispatcher] Received ${eventType} alert.`);
 
-    if (eventType === 'KitchenOverload') {
-      await this.dispatchPushNotification('ManagerDashboard', payload);
-    } else if (eventType === 'InventoryLow') {
-      await this.dispatchEmail('manager@restaurant.com', payload);
-      await this.dispatchPushNotification('ManagerDashboard', payload);
-    } else if (eventType === 'TemperatureAlert') {
-      await this.dispatchSms('+1234567890', payload);
-      await this.dispatchEmail('manager@restaurant.com', payload);
-      await this.dispatchPushNotification('ManagerDashboard', payload);
+    const routes = ALERT_ROUTING[eventType];
+    if (!routes) {
+      console.warn(`[AlertDispatcher] No routing configured for event type: ${eventType}`);
+      return;
     }
 
-    // 3. Mark as dispatched
+    await Promise.all(
+      routes.map(({ channel, target }) => channel.send(target, payload))
+    );
+
     await alertRepo.updateAlertStatus(alertRecord.id, 'DISPATCHED');
-  }
-
-  async dispatchEmail(to, payload) {
-    console.log(`[Email Service] Mock sending email to ${to}...`, payload);
-  }
-
-  async dispatchSms(phone, payload) {
-    console.log(`[SMS Service] Mock sending SMS to ${phone}...`, payload);
-  }
-
-  async dispatchPushNotification(deviceIds, payload) {
-    console.log(`[Push Notification] Mock publishing to ${deviceIds}...`, payload);
   }
 }
 
 module.exports = new AlertDispatcher();
+
