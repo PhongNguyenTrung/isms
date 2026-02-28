@@ -40,6 +40,14 @@ npm install
 # Inventory Service (Phase 2)
 cd services/inventory-service
 npm install
+
+# Notification Service (Phase 3)
+cd services/notification-service
+npm install
+
+# Analytics Service (Phase 3)
+cd services/analytics-service
+npm install
 ```
 
 ---
@@ -139,6 +147,46 @@ Dịch vụ xử lý dữ liệu viễn trắc theo thời gian thực để lư
   INFLUXDB_TOKEN=super_secret_influx_token_for_irms_development
   INFLUXDB_ORG=irms_org
   INFLUXDB_BUCKET=irms_bucket
+  KAFKA_BROKERS=localhost:9092
+  ```
+- **Lệnh khởi chạy**:
+  ```bash
+  node src/index.js
+  ```
+
+### 6. Notification Service (Service Thông báo)
+Dịch vụ xử lý các cảnh báo từ hệ thống và gửi thông báo đa kênh (Email, SMS, Push Notification). Thuộc Giai đoạn 3 (Phase 3).
+
+- **Vị trí**: `services/notification-service/`
+- **Biến môi trường mẫu (`.env`)**:
+  ```env
+  PORT=3006
+  DB_HOST=localhost
+  DB_PORT=5432
+  DB_USER=irms_user
+  DB_PASSWORD=irms_password
+  DB_NAME=irms_db
+  KAFKA_BROKERS=localhost:9092
+  ```
+- **Lệnh khởi chạy**:
+  ```bash
+  node src/index.js
+  ```
+
+### 7. Analytics Service (Service Phân tích & Báo cáo)
+Dịch vụ tính toán các chỉ số dashboard thời gian thực qua WebSockets và tạo báo cáo dự đoán. Cần Docker khởi chạy `Redis` trước.
+
+- **Vị trí**: `services/analytics-service/`
+- **Biến môi trường mẫu (`.env`)**:
+  ```env
+  PORT=3007
+  DB_HOST=localhost
+  DB_PORT=5432
+  DB_USER=irms_user
+  DB_PASSWORD=irms_password
+  DB_NAME=irms_db
+  REDIS_HOST=localhost
+  REDIS_PORT=6379
   KAFKA_BROKERS=localhost:9092
   ```
 - **Lệnh khởi chạy**:

@@ -205,6 +205,51 @@ services:
       - irms-network
 
   # ----------------------------------------------------------------------------
+  # Analytics & Notifications Services (Phase 3)
+  # ----------------------------------------------------------------------------
+  notification-service:
+    build: ./services/notification-service
+    container_name: irms-notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: 3006
+      DB_USER: irms_user
+      DB_PASSWORD: irms_password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: irms_db
+      KAFKA_BROKERS: kafka:29092
+    networks:
+      - irms-network
+
+  analytics-service:
+    build: ./services/analytics-service
+    container_name: irms-analytics
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: 3007
+      DB_USER: irms_user
+      DB_PASSWORD: irms_password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: irms_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BROKERS: kafka:29092
+    networks:
+      - irms-network
+
+  # ----------------------------------------------------------------------------
   # API Gateway
   # ----------------------------------------------------------------------------
   api-gateway:
