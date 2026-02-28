@@ -1,5 +1,5 @@
 const { Kafka } = require('kafkajs');
-const queueRepository = require('../repositories/queueRepository');
+const KitchenQueueManager = require('../services/KitchenQueueManager');
 
 const brokers = process.env.KAFKA_BROKERS ? process.env.KAFKA_BROKERS.split(',') : ['localhost:9092'];
 
@@ -17,37 +17,23 @@ const connectConsumer = async (io) => {
 
     await consumer.subscribe({ topic: 'orders', fromBeginning: false });
 
+    const broadcast = (event, data) => io.emit(event, data);
+
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
-        const eventValue = JSON.parse(message.value.toString());
-        console.log(`Received order event: ${eventValue.orderId}`);
+        try {
+          const orderEvent = JSON.parse(message.value.toString());
+          console.log(`Received order event: ${orderEvent.orderId}`);
 
-        // Simple Priority Calculation
-        const priorityScore = calculatePriority(eventValue);
-
-        // Add to kitchen queue
-        const task = await queueRepository.addOrderToQueue(
-          eventValue.orderId,
-          eventValue.tableId,
-          eventValue.items,
-          priorityScore
-        );
-
-        // Broadcast new task to KDS displays
-        io.emit('new_kitchen_task', task);
+          await KitchenQueueManager.processIncomingOrder(orderEvent, broadcast);
+        } catch (err) {
+          console.error('Error processing order event:', err);
+        }
       },
     });
   } catch (error) {
     console.error('Failed to connect to Kafka consumer', error);
   }
-};
-
-const calculatePriority = (order) => {
-  // Simple mock priority calculation
-  // FR7: Dish complexity (30%), Wait time (40%), Customer type (20%), Kitchen load (10%)
-  let baseScore = 5;
-  if (order.items.length > 3) baseScore += 2; // Complex order
-  return baseScore;
 };
 
 module.exports = { connectConsumer };
