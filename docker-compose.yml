@@ -144,6 +144,67 @@ services:
       - irms-network
 
   # ----------------------------------------------------------------------------
+  # IoT Gateway & Inventory Services (Phase 2)
+  # ----------------------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: irms-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - irms-network
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: irms-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: irms_user
+      DOCKER_INFLUXDB_INIT_PASSWORD: irms_password
+      DOCKER_INFLUXDB_INIT_ORG: irms_org
+      DOCKER_INFLUXDB_INIT_BUCKET: irms_bucket
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: super_secret_influx_token_for_irms_development
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - irms-network
+
+  iot-gateway:
+    build: ./services/iot-gateway
+    container_name: irms-iot-gateway
+    depends_on:
+      - mosquitto
+      - kafka
+    environment:
+      PORT: 3004
+      MQTT_BROKER: mqtt://mosquitto:1883
+      KAFKA_BROKERS: kafka:29092
+    networks:
+      - irms-network
+
+  inventory-service:
+    build: ./services/inventory-service
+    container_name: irms-inventory
+    depends_on:
+      - influxdb
+      - kafka
+    environment:
+      PORT: 3005
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: super_secret_influx_token_for_irms_development
+      INFLUXDB_ORG: irms_org
+      INFLUXDB_BUCKET: irms_bucket
+      KAFKA_BROKERS: kafka:29092
+    networks:
+      - irms-network
+
+  # ----------------------------------------------------------------------------
   # API Gateway
   # ----------------------------------------------------------------------------
   api-gateway:
@@ -167,3 +228,6 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  mosquitto_data:
+  mosquitto_log:
+  influxdb_data:
