@@ -1,0 +1,93 @@
+version: 2
+updates:
+  # Auth Service
+  - package-ecosystem: "npm"
+    directory: "/services/auth-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Ordering Service
+  - package-ecosystem: "npm"
+    directory: "/services/ordering-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Kitchen Service
+  - package-ecosystem: "npm"
+    directory: "/services/kitchen-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # IoT Gateway
+  - package-ecosystem: "npm"
+    directory: "/services/iot-gateway"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Inventory Service
+  - package-ecosystem: "npm"
+    directory: "/services/inventory-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Notification Service
+  - package-ecosystem: "npm"
+    directory: "/services/notification-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Analytics Service
+  - package-ecosystem: "npm"
+    directory: "/services/analytics-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/services/auth-service"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "docker"
+    directory: "/services/ordering-service"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "docker"
+    directory: "/services/kitchen-service"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "docker"
+    directory: "/services/iot-gateway"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "docker"
+    directory: "/services/inventory-service"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "docker"
+    directory: "/services/notification-service"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "docker"
+    directory: "/services/analytics-service"
+    schedule:
+      interval: "monthly"
