@@ -215,6 +215,10 @@ IRMS is an intelligent restaurant management system designed with **Microservice
 3. View [System Context](diagrams/context/system-context.md) - Business context
 4. Review [Functional Requirements](requirements/functional-requirements.md) - Chức năng
 
+### Khởi chạy Hệ thống / Running the System
+
+1. Quản lý, Kỹ sư truy cập [Hướng dẫn Chạy Dịch vụ Cục bộ](RUN_INSTRUCTIONS.md) (Local Service Run Instructions) - Tài liệu hướng dẫn thiết lập biến môi trường và chạy các service `auth-service`, `kitchen-service`, `ordering-service`.
+
 ---
 
 ## 🎯 Project Status
