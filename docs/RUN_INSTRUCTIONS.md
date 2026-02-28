@@ -32,6 +32,14 @@ npm install
 # Ordering Service
 cd services/ordering-service
 npm install
+
+# IoT Gateway Service (Phase 2)
+cd services/iot-gateway
+npm install
+
+# Inventory Service (Phase 2)
+cd services/inventory-service
+npm install
 ```
 
 ---
@@ -105,7 +113,49 @@ Dịch vụ xử lý vòng đời của đơn hàng.
     node src/index.js
     ```
 
+### 4. IoT Gateway Service (Service Tích hợp IoT)
+Dịch vụ xử lý tín hiệu MQTT từ các thiết bị cảm biến phần cứng (nhiệt độ, load-cell). Thuộc Giai đoạn 2 (Phase 2). Cần khởi chạy backend MQTT Broker (`Mosquitto`) trước.
+
+- **Vị trí**: `services/iot-gateway/`
+- **Biến môi trường mẫu (`.env`)**:
+  ```env
+  PORT=3004
+  MQTT_BROKER=mqtt://localhost:1883
+  KAFKA_BROKERS=localhost:9092
+  ```
+- **Lệnh khởi chạy**:
+  ```bash
+  node src/index.js
+  ```
+
+### 5. Inventory Service (Service Giám sát Tồn kho)
+Dịch vụ xử lý dữ liệu viễn trắc theo thời gian thực để lưu vào InfluxDB và phát tín hiệu cảnh báo tồn kho. Cần Docker khởi chạy `InfluxDB` trước.
+
+- **Vị trí**: `services/inventory-service/`
+- **Biến môi trường mẫu (`.env`)**:
+  ```env
+  PORT=3005
+  INFLUXDB_URL=http://localhost:8086
+  INFLUXDB_TOKEN=super_secret_influx_token_for_irms_development
+  INFLUXDB_ORG=irms_org
+  INFLUXDB_BUCKET=irms_bucket
+  KAFKA_BROKERS=localhost:9092
+  ```
+- **Lệnh khởi chạy**:
+  ```bash
+  node src/index.js
+  ```
+
 ---
+
+## 🐳 Khởi chạy Bằng Docker Compose (Khuyến nghị) / Running via Docker Compose
+
+Thay vì thiết lập thủ công từng service, bạn nên chạy toàn bộ bằng Docker Compose để tự động cấp phát API Gateway, Kafka, InfluxDB, Mosquitto và database:
+
+```bash
+# Ở thư mục gốc d:\isms
+docker-compose up -d --build
+```
 
 ## 🧩 Khởi chạy Đồng thời / Running Concurrently
 
