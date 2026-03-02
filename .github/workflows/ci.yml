@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-services:
+    name: Test Services
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service: [auth-service, kitchen-service, ordering-service]
+
+    defaults:
+      run:
+        working-directory: ./services/${{ matrix.service }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20' # Using LTS
+          
+      - name: Install Dependencies
+        run: npm install
+        
+      # Using standard npm test for execution. It will pass if no tests are found.
+      # But it will ensure the codebase installs correctly and runs standard scripts.
+      - name: Run Tests
+        run: npm test --if-present
