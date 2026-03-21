@@ -250,6 +250,19 @@ services:
       - irms-network
 
   # ----------------------------------------------------------------------------
+  # Frontend — Tablet Ordering App
+  # ----------------------------------------------------------------------------
+  tablet-app:
+    build: ./frontend/tablet-app
+    container_name: irms-tablet
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - irms-network
+
+  # ----------------------------------------------------------------------------
   # API Gateway
   # ----------------------------------------------------------------------------
   api-gateway:
