@@ -262,6 +262,17 @@ services:
     networks:
       - irms-network
 
+  manager-dashboard:
+    build: ./frontend/manager-dashboard
+    container_name: irms-manager
+    ports:
+      - "3001:80"
+    depends_on:
+      - api-gateway
+      - analytics-service
+    networks:
+      - irms-network
+
   # ----------------------------------------------------------------------------
   # API Gateway
   # ----------------------------------------------------------------------------
