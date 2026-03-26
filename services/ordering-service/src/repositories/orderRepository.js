@@ -38,7 +38,29 @@ const getOrdersByTable = async (tableId) => {
   return result.rows;
 };
 
+const getOrderById = async (orderId) => {
+  const orderResult = await db.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+  if (orderResult.rows.length === 0) return null;
+  const order = orderResult.rows[0];
+
+  const itemsResult = await db.query(
+    'SELECT oi.*, mi.name, mi.category FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = $1',
+    [orderId]
+  );
+  return { ...order, items: itemsResult.rows };
+};
+
+const updateOrderStatus = async (orderId, status) => {
+  const result = await db.query(
+    'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
+    [status, orderId]
+  );
+  return result.rows[0];
+};
+
 module.exports = {
   createOrder,
-  getOrdersByTable
+  getOrdersByTable,
+  getOrderById,
+  updateOrderStatus
 };

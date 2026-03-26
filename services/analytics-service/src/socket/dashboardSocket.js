@@ -26,10 +26,15 @@ const buildInitialState = async (socket) => {
   try {
     const activeOrders = await redisClient.get('metric:active_orders');
     const dailyRevenue = await redisClient.get('metric:daily_revenue');
+    const prepTimes = await redisClient.lRange('metric:prep_times', 0, -1);
+    const avgPrepTime = prepTimes.length > 0
+      ? Math.round(prepTimes.reduce((s, t) => s + Number(t), 0) / prepTimes.length)
+      : 0;
 
     socket.emit('initial_state', {
       active_orders: activeOrders ? Number(activeOrders) : 0,
       daily_revenue: dailyRevenue ? Number(dailyRevenue) : 0,
+      avg_prep_time: avgPrepTime,
     });
   } catch (err) {
     console.error('Error loading initial dashboard state:', err);

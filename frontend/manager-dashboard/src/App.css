@@ -337,3 +337,88 @@ body {
   font-size: 14px;
 }
 .empty-text { color: var(--text-muted); font-size: 14px; }
+
+/* ===== Header Nav ===== */
+.dash-nav { display: flex; gap: 4px; margin-left: 24px; }
+
+/* ===== KDS ===== */
+.overload-alert {
+  background: rgba(239,68,68,0.15);
+  border: 1px solid var(--error);
+  color: var(--error);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  animation: pulse-red 1s infinite;
+}
+@keyframes pulse-red {
+  0%, 100% { background: rgba(239,68,68,0.15); }
+  50% { background: rgba(239,68,68,0.25); }
+}
+
+.kds-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+.kds-stat strong { font-size: 20px; margin-right: 4px; }
+
+.kds-filter { margin-bottom: 16px; display: flex; gap: 4px; }
+
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.task-card {
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.task-table { font-size: 15px; font-weight: 700; color: var(--text); }
+.task-order { color: var(--text-muted); }
+.task-elapsed { margin-left: auto; color: var(--warning); font-weight: 600; font-size: 12px; }
+
+.task-items { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.task-items li { font-size: 13px; color: var(--text); display: flex; align-items: baseline; gap: 6px; }
+.item-qty { font-weight: 700; color: var(--accent); min-width: 24px; }
+.item-name { flex: 1; }
+.item-note { font-size: 11px; color: var(--warning); font-style: italic; }
+
+.task-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.task-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.task-priority { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+
+.btn-status {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-status:hover { background: var(--accent-dark); }

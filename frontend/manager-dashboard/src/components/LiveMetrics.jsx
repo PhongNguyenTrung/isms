@@ -13,7 +13,7 @@ function MetricCard({ label, value, unit, live }) {
 }
 
 export default function LiveMetrics() {
-  const [metrics, setMetrics] = useState({ active_orders: null, daily_revenue: null });
+  const [metrics, setMetrics] = useState({ active_orders: null, daily_revenue: null, avg_prep_time: null });
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -26,6 +26,7 @@ export default function LiveMetrics() {
       setMetrics({
         active_orders: data.active_orders,
         daily_revenue: data.daily_revenue,
+        avg_prep_time: data.avg_prep_time,
       });
     });
 
@@ -41,6 +42,9 @@ export default function LiveMetrics() {
       ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v)
       : '—';
 
+  const formatPrepTime = (v) =>
+    v != null ? `${Math.floor(v / 60)}m ${v % 60}s` : '—';
+
   return (
     <section className="section">
       <div className="section-header">
@@ -54,6 +58,11 @@ export default function LiveMetrics() {
         <MetricCard
           label="Doanh thu hôm nay"
           value={formatRevenue(metrics.daily_revenue)}
+          live
+        />
+        <MetricCard
+          label="Thời gian chế biến TB"
+          value={formatPrepTime(metrics.avg_prep_time)}
           live
         />
       </div>

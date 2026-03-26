@@ -9,11 +9,13 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: 'kitchen-group' });
+const producer = kafka.producer();
 
 const connectConsumer = async (io) => {
   try {
+    await producer.connect();
     await consumer.connect();
-    console.log('Successfully connected to Kafka consumer');
+    console.log('Successfully connected to Kafka');
 
     await consumer.subscribe({ topic: 'orders', fromBeginning: false });
 
@@ -32,8 +34,30 @@ const connectConsumer = async (io) => {
       },
     });
   } catch (error) {
-    console.error('Failed to connect to Kafka consumer', error);
+    console.error('Failed to connect to Kafka', error);
   }
 };
 
-module.exports = { connectConsumer };
+const publishAlert = async (eventType, key, payload) => {
+  try {
+    await producer.send({
+      topic: 'alerts',
+      messages: [{ key, value: JSON.stringify({ type: eventType, data: payload }) }],
+    });
+  } catch (error) {
+    console.error(`Error publishing alert from kitchen-service:`, error);
+  }
+};
+
+const publishEvent = async (topic, key, payload) => {
+  try {
+    await producer.send({
+      topic,
+      messages: [{ key, value: JSON.stringify(payload) }],
+    });
+  } catch (error) {
+    console.error(`Error publishing event to topic ${topic}:`, error);
+  }
+};
+
+module.exports = { connectConsumer, publishAlert, publishEvent };

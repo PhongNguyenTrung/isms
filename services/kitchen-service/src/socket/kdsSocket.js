@@ -1,7 +1,11 @@
 const KitchenQueueManager = require('../services/KitchenQueueManager');
 
+let _broadcast = (event, data) => {
+  console.warn('[kdsSocket] broadcast called before socket initialized:', event);
+};
+
 const setupKdsSocket = (io) => {
-  const broadcast = (event, data) => io.emit(event, data);
+  _broadcast = (event, data) => io.emit(event, data);
 
   io.on('connection', async (socket) => {
     console.log('New KDS client connected: ' + socket.id);
@@ -16,7 +20,7 @@ const setupKdsSocket = (io) => {
     socket.on('update_task_status', async (data) => {
       try {
         const { taskId, status } = data;
-        await KitchenQueueManager.updateTaskStatus(taskId, status, broadcast);
+        await KitchenQueueManager.updateTaskStatus(taskId, status, _broadcast);
       } catch (err) {
         console.error('Error updating task status', err);
       }
@@ -28,4 +32,7 @@ const setupKdsSocket = (io) => {
   });
 };
 
-module.exports = { setupKdsSocket };
+// Exposed so REST routes can also trigger socket broadcasts
+const getBroadcast = () => _broadcast;
+
+module.exports = { setupKdsSocket, getBroadcast };

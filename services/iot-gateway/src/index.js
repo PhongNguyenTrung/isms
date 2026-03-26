@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const { connectProducer } = require('./config/kafka');
+const { connectProducer, disconnectProducer } = require('./config/kafka');
 const { connectMqtt } = require('./config/mqtt');
 
 const app = express();
@@ -15,8 +15,15 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3004;
 
-app.listen(PORT, async () => {
+const server = app.listen(PORT, async () => {
   console.log(`IoT Gateway running on port ${PORT}`);
   await connectProducer();
   connectMqtt();
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down IoT Gateway...');
+  await disconnectProducer();
+  server.close(() => process.exit(0));
 });

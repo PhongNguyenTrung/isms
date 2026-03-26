@@ -8,6 +8,8 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+app.use('/api/inventory', require('./routes/inventoryRoutes'));
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'UP', service: 'inventory-service' });
 });

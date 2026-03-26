@@ -35,8 +35,11 @@ class AlertDispatcher {
       return;
     }
 
+    // Inject event type so channels can build contextual messages
+    const enrichedPayload = { ...payload, _eventType: eventType };
+
     await Promise.all(
-      routes.map(({ channel, target }) => channel.send(target, payload))
+      routes.map(({ channel, target }) => channel.send(target, enrichedPayload))
     );
 
     await alertRepo.updateAlertStatus(alertRecord.id, 'DISPATCHED');

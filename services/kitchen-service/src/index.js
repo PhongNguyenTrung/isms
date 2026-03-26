@@ -25,6 +25,9 @@ setupKdsSocket(io);
 app.use(cors());
 app.use(express.json());
 
+// REST API for KDS clients (FR5, FR6)
+app.use('/api/kitchen', require('./routes/kitchenRoutes'));
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'UP', service: 'kitchen-service' });
 });

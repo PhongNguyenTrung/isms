@@ -15,8 +15,8 @@ const connectKafka = async () => {
     await consumer.connect();
     console.log('Successfully connected to Kafka for Analytics Service');
 
-    // Subscribe to topics we want to track
-    await consumer.subscribe({ topic: 'orders', fromBeginning: false });
+    // Subscribe to order and kitchen events
+    await consumer.subscribe({ topics: ['orders', 'kitchen_completed'], fromBeginning: false });
 
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
@@ -25,6 +25,9 @@ const connectKafka = async () => {
 
           if (topic === 'orders') {
             await MetricsAggregator.processOrderPlaced(payload);
+          } else if (topic === 'kitchen_completed') {
+            // payload = { taskId, orderId, createdAt, completedAt }
+            await MetricsAggregator.processKitchenTaskCompleted(payload);
           }
         } catch (err) {
           console.error('Error processing message in Analytics:', err);
