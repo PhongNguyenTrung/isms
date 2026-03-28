@@ -78,10 +78,11 @@ services:
     networks:
       - irms-network
     healthcheck:
-      test: nc -z localhost 9092 || exit -1
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1 || exit 1"]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   # ----------------------------------------------------------------------------
   # Microservices
@@ -110,7 +111,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     environment:
       PORT: 3002
       JWT_SECRET: super_secret_jwt_key_for_irms_development
@@ -130,7 +131,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     environment:
       PORT: 3003
       JWT_SECRET: super_secret_jwt_key_for_irms_development
@@ -179,8 +180,10 @@ services:
     build: ./services/iot-gateway
     container_name: irms-iot-gateway
     depends_on:
-      - mosquitto
-      - kafka
+      mosquitto:
+        condition: service_started
+      kafka:
+        condition: service_healthy
     environment:
       PORT: 3004
       MQTT_BROKER: mqtt://mosquitto:1883
@@ -192,8 +195,10 @@ services:
     build: ./services/inventory-service
     container_name: irms-inventory
     depends_on:
-      - influxdb
-      - kafka
+      influxdb:
+        condition: service_started
+      kafka:
+        condition: service_healthy
     environment:
       PORT: 3005
       INFLUXDB_URL: http://influxdb:8086
@@ -214,7 +219,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     environment:
       PORT: 3006
       DB_USER: irms_user
