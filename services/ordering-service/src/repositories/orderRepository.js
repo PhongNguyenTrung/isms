@@ -44,7 +44,7 @@ const getOrderById = async (orderId) => {
   const order = orderResult.rows[0];
 
   const itemsResult = await db.query(
-    'SELECT oi.*, mi.name, mi.category FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = $1',
+    'SELECT oi.*, mi.name_vi AS name, mi.name_en, mi.category FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = $1',
     [orderId]
   );
   return { ...order, items: itemsResult.rows };
