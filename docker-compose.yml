@@ -223,6 +223,12 @@ services:
       DB_PORT: 5432
       DB_NAME: irms_db
       KAFKA_BROKERS: kafka:29092
+      # SMTP config — leave blank to fall back to Ethereal test account (dev mode)
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: "IRMS Alerts <alerts@irms.local>"
     networks:
       - irms-network
 

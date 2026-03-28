@@ -13,3 +13,11 @@ export async function placeOrder(tableId, items) {
     }),
   });
 }
+
+export async function getOrder(orderId) {
+  return request(`/orders/${orderId}`);
+}
+
+export async function cancelOrder(orderId) {
+  return request(`/orders/${orderId}/cancel`, { method: 'PATCH' });
+}

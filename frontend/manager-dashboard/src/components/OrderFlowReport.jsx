@@ -55,6 +55,10 @@ export default function OrderFlowReport() {
               <div className="stat-lbl">Tổng đơn hàng</div>
             </div>
             <div className="stat-box">
+              <div className="stat-num">{formatPrice(data.totalRevenue ?? 0)}</div>
+              <div className="stat-lbl">Tổng doanh thu</div>
+            </div>
+            <div className="stat-box">
               <div className="stat-num">{formatPrice(data.averageOrderValue ?? 0)}</div>
               <div className="stat-lbl">Giá trị trung bình</div>
             </div>

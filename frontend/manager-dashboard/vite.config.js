@@ -16,6 +16,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/analytics\.io/, '/socket.io'),
       },
+      '/socket.io': {
+        target: 'http://localhost:3003',
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
 });

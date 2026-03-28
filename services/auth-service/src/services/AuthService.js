@@ -51,6 +51,39 @@ class AuthService {
       user: { id: user.id, username: user.username, role: user.role }
     };
   }
+
+  /**
+   * Issues a new JWT from a valid existing token (token refresh).
+   * Throws an error with statusCode if the token is invalid.
+   */
+  refreshToken(oldToken) {
+    try {
+      const decoded = jwt.verify(oldToken, process.env.JWT_SECRET);
+      const newToken = jwt.sign(
+        { id: decoded.id, username: decoded.username, role: decoded.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
+      return { token: newToken };
+    } catch {
+      const error = new Error('Token is not valid');
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
+  /**
+   * Returns the user profile from DB by id.
+   */
+  async getProfile(userId) {
+    const result = await userRepository.findById(userId);
+    if (!result) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    return { id: result.id, username: result.username, role: result.role };
+  }
 }
 
 module.exports = new AuthService();

@@ -13,7 +13,13 @@ const createUser = async (username, hashedPassword, role) => {
   return result.rows[0];
 };
 
+const findById = async (id) => {
+  const result = await db.query('SELECT id, username, role FROM users WHERE id = $1', [id]);
+  return result.rows.length > 0 ? result.rows[0] : null;
+};
+
 module.exports = {
   findByUsername,
+  findById,
   createUser
 };

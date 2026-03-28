@@ -29,5 +29,37 @@ const getTableOrders = async (req, res) => {
   }
 };
 
-module.exports = { placeOrder, getTableOrders };
+const getOrderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await orderRepository.getOrderById(id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    return res.status(200).json(order);
+  } catch (error) {
+    console.error('Error fetching order', error);
+    return res.status(500).json({ message: 'Server error fetching order' });
+  }
+};
+
+const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await orderRepository.getOrderById(id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    if (!['PLACED', 'CONFIRMED'].includes(order.status)) {
+      return res.status(400).json({ message: `Cannot cancel order with status ${order.status}` });
+    }
+    const updated = await orderRepository.updateOrderStatus(id, 'CANCELLED');
+    return res.status(200).json({ message: 'Order cancelled', order: updated });
+  } catch (error) {
+    console.error('Error cancelling order', error);
+    return res.status(500).json({ message: 'Server error cancelling order' });
+  }
+};
+
+module.exports = { placeOrder, getTableOrders, getOrderById, cancelOrder };
 
