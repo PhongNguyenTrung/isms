@@ -1,5 +1,4 @@
 const { Kafka } = require('kafkajs');
-const KitchenQueueManager = require('../services/KitchenQueueManager');
 
 const brokers = process.env.KAFKA_BROKERS ? process.env.KAFKA_BROKERS.split(',') : ['localhost:9092'];
 
@@ -12,6 +11,9 @@ const consumer = kafka.consumer({ groupId: 'kitchen-group' });
 const producer = kafka.producer();
 
 const connectConsumer = async (io) => {
+  // Lazy require to break circular dependency: kafka.js ↔ KitchenQueueManager.js
+  const KitchenQueueManager = require('../services/KitchenQueueManager');
+
   try {
     await producer.connect();
     await consumer.connect();

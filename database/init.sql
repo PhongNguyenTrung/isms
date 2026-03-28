@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS kitchen_tasks (
     table_id VARCHAR(50) NOT NULL,
     items JSONB NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-    priority_score INTEGER DEFAULT 0,
+    priority_score NUMERIC(4,1) DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
