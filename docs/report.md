@@ -1134,182 +1134,613 @@ Các quyết định kiến trúc chính được ghi nhận dưới dạng **Ar
 
 ## 6. NGUYÊN LÝ THIẾT KẾ (DESIGN PRINCIPLES)
 
-Các nguyên lý thiết kế áp dụng cho IRMS:
+IRMS được xây dựng trên nền tảng **5 nguyên lý SOLID** — bộ nguyên tắc thiết kế hướng đối tượng (OOD) cốt lõi do **Robert C. Martin (Uncle Bob)** khởi xướng — cùng với các nguyên lý kiến trúc Microservices bổ trợ. Phần này trình bày **lý thuyết chuyên sâu** của từng nguyên lý, bao gồm bối cảnh lịch sử, ý nghĩa thực sự, các anti-pattern phổ biến, và mối liên hệ giữa các nguyên lý với nhau.
 
-### 1. Single Responsibility Principle (SRP)
-
-**Định nghĩa**: Mỗi module/service chỉ có một lý do để thay đổi
-
-**Áp dụng**:
-- **Ordering Service**: Chỉ quản lý order placement
-- **Kitchen Service**: Chỉ quản lý kitchen queue
-- **Inventory Service**: Chỉ quản lý stock monitoring
-
-**Lợi ích**: Dễ hiểu, dễ test, dễ maintain
+> **Liên kết đọc**: Mỗi nguyên lý ở đây được minh chứng bằng code và kiến trúc thực tế của IRMS tại **Mục 7 — Áp dụng SOLID trong IRMS**.
 
 ---
 
-### 2. Loose Coupling (Khớp nối lỏng)
+### 6.1. Bộ Nguyên lý SOLID — Tổng quan
 
-**Định nghĩa**: Các module không phụ thuộc trực tiếp vào nhau
+SOLID là từ viết tắt (acronym) được Michael Feathers đặt ra để ghi nhớ 5 nguyên lý thiết kế hướng đối tượng mà Robert C. Martin đã tổng hợp và phổ biến rộng rãi trong cộng đồng phần mềm. Các nguyên lý này không phải là luật bất biến, mà là **heuristics (kinh nghiệm thực chứng)** giúp nhận diện và tránh các thiết kế dễ gãy (fragile), cứng nhắc (rigid), và khó đọc (opaque).
 
-**Áp dụng**:
-- Services giao tiếp qua **events** (not direct API calls)
-- Ordering Service không biết Kitchen Service tồn tại
+| Chữ | Nguyên lý | Phát biểu cốt lõi | Tác giả gốc | Năm |
+|-----|-----------|-------------------|-------------|-----|
+| **S** | Single Responsibility | Mỗi module chỉ có một lý do để thay đổi | Robert C. Martin | 2003 |
+| **O** | Open/Closed | Mở để mở rộng, đóng để chỉnh sửa | Bertrand Meyer | 1988 |
+| **L** | Liskov Substitution | Lớp con thay thế lớp cha mà không phá vỡ tính đúng đắn | Barbara Liskov | 1987 |
+| **I** | Interface Segregation | Client không bị ép phụ thuộc vào interface không sử dụng | Robert C. Martin | 1996 |
+| **D** | Dependency Inversion | Module cấp cao và cấp thấp đều phụ thuộc vào abstraction | Robert C. Martin | 1996 |
 
-**Lợi ích**: Add/remove services without affecting others
-
----
-
-### 3. High Cohesion (Gắn kết cao)
-
-**Định nghĩa**: Các thành phần liên quan nên ở cùng module
-
-**Áp dụng**:
-- Order validation logic ở Ordering Service (not scattered)
-- Queue management logic ở Kitchen Service
-
-**Lợi ích**: Easier to understand, fewer cross-module changes
+**Mối liên hệ giữa các nguyên lý**: SOLID không phải 5 nguyên lý rời rạc mà hỗ trợ lẫn nhau:
+- **SRP** tạo ra các module nhỏ gọn → dễ áp dụng **OCP** (mở rộng không sửa).
+- **LSP** đảm bảo **OCP** hoạt động đúng — nếu subclass vi phạm contract, mở rộng sẽ phá vỡ hệ thống.
+- **ISP** giúp **DIP** khả thi — interface nhỏ gọn hơn thì dễ tạo abstraction hơn.
+- **DIP** là nền tảng kỹ thuật cho **OCP** — inject dependency thay vì hardcode cho phép mở rộng linh hoạt.
 
 ---
 
-### 4. Separation of Concerns (Tách biệt trách nhiệm)
+#### 6.1.1. S — Single Responsibility Principle (SRP)
 
-**Định nghĩa**: Tách business logic, infrastructure, presentation
+**Phát biểu gốc**: *"A module should be responsible to one, and only one, actor."*
+— Robert C. Martin, *Clean Architecture* (2017)
 
-**Áp dụng**:
-- **Business Logic**: Service layer (use cases)
-- **Infrastructure**: Repository layer (database access)
-- **Presentation**: REST controllers
+**Bối cảnh**: SRP là nguyên lý bị hiểu sai nhiều nhất trong SOLID. Nhiều người hiểu "một class chỉ làm một việc" — nhưng Uncle Bob đã làm rõ rằng **"một việc" ở đây được định nghĩa bởi actor** (nhóm người dùng đòi hỏi thay đổi), không phải số lượng method.
 
-**Lợi ích**: Swap PostgreSQL → MongoDB without changing business logic
+**Giải thích chuyên sâu**:
+
+Xét ví dụ kinh điển: Một class `Employee` có 3 methods:
+- `calculatePay()` → được sử dụng bởi **Phòng Kế toán**
+- `reportHours()` → được sử dụng bởi **Phòng Nhân sự**
+- `save()` → được sử dụng bởi **Đội DBA**
+
+Ba actor khác nhau có lý do thay đổi khác nhau. Nếu Phòng Kế toán muốn đổi công thức lương, developer sửa `calculatePay()` nhưng vô tình ảnh hưởng đến thuật toán chung mà `reportHours()` cũng dùng → **Phòng Nhân sự bị ảnh hưởng mà không hề biết**.
+
+**Anti-patterns khi vi phạm SRP**:
+
+| Anti-pattern | Mô tả | Hậu quả |
+|-------------|-------|---------|
+| **God Class** | Class có hàng nghìn dòng code, thao tác nhiều domain khác nhau | Sửa 1 chỗ, hỏng nhiều chỗ |
+| **Shotgun Surgery** | Một thay đổi business buộc sửa nhiều class cùng lúc | Tăng nguy cơ bỏ sót |
+| **Divergent Change** | Một class bị sửa thường xuyên bởi nhiều lý do khác nhau | Merge conflict, regression |
+
+**Hướng dẫn áp dụng**: Khi thấy một class có nhiều `import/require` không liên quan đến nhau, hoặc khi sửa feature A mà test feature B bắt đầu fail → đó là dấu hiệu SRP đang bị vi phạm.
 
 ---
 
-### 5. Dependency Inversion (Đảo ngược phụ thuộc)
+#### 6.1.2. O — Open/Closed Principle (OCP)
 
-**Định nghĩa**: Phụ thuộc vào abstraction, không phụ thuộc vào implementation
+**Phát biểu gốc**: *"Software entities should be open for extension, but closed for modification."*
+— Bertrand Meyer, *Object-Oriented Software Construction* (1988)
 
-**Áp dụng**:
-```java
-// Good: Depend on interface
-interface OrderRepository {
-    void save(Order order);
-}
+**Bối cảnh**: OCP được Bertrand Meyer đề xuất lần đầu trong ngữ cảnh kế thừa (inheritance). Sau đó Robert C. Martin đã mở rộng ý nghĩa sang **Polymorphic OCP** — sử dụng abstraction (interface/abstract class) thay vì chỉ inheritance để đạt được OCP.
 
-// Bad: Depend on concrete class
-class PostgreSQLOrderRepository {
-    void save(Order order) { ... }
+**Giải thích chuyên sâu**:
+
+Mục tiêu cốt lõi: **Bảo vệ code đang hoạt động ổn định khỏi sự thay đổi**. Code đã được test, review, và deploy lên production không nên bị sửa đổi khi thêm tính năng mới — vì mỗi lần sửa đều có nguy cơ tạo bug mới.
+
+**Hai cách tiếp cận OCP**:
+
+| Cách | Cơ chế | Ưu điểm | Nhược điểm |
+|------|--------|---------|------------|
+| **Meyer's OCP** (Inheritance) | Kế thừa class và override method | Đơn giản, dễ hiểu | Tight coupling với parent class |
+| **Polymorphic OCP** (Abstraction) | Interface + Strategy/Plugin pattern | Loose coupling, linh hoạt | Cần nhiều abstraction ban đầu |
+
+**Anti-pattern khi vi phạm OCP**:
+
+```
+// ❌ Vi phạm OCP — phải sửa code cũ mỗi lần thêm kênh mới
+function sendNotification(type, message) {
+    if (type === 'email') { /* gửi email */ }
+    else if (type === 'sms') { /* gửi SMS */ }
+    else if (type === 'telegram') { /* thêm kênh → SỬA HÀM NÀY */ }
 }
 ```
 
-**Lợi ích**: Easy to mock for testing, easy to swap implementations
+**Dấu hiệu vi phạm**: Khi thấy chuỗi `if/else if` hoặc `switch/case` ngày càng dài để xử lý các biến thể (variants) — đó là tín hiệu cần refactor sang Strategy/Plugin pattern.
 
 ---
 
-## 7. ÁP DỤNG CÁC NGUYÊN LÝ SOLID
+#### 6.1.3. L — Liskov Substitution Principle (LSP)
 
-Hệ thống IRMS áp dụng **tất cả 5 nguyên lý SOLID**:
+**Phát biểu gốc**: *"If S is a subtype of T, then objects of type T may be replaced with objects of type S without altering any of the desirable properties of the program."*
+— Barbara Liskov & Jeannette Wing, *A Behavioral Notion of Subtyping* (1994)
 
-### S - Single Responsibility Principle (SRP)
+**Bối cảnh**: LSP không chỉ là quy tắc kỹ thuật mà là **nền tảng toán học cho tính đúng đắn của kế thừa**. Barbara Liskov (Turing Award 2008) phát biểu nguyên lý này nhằm trả lời câu hỏi: "Khi nào thì quan hệ kế thừa (is-a) thực sự đúng đắn?"
 
-**Áp dụng**: Mỗi service đảm nhiệm một chức năng duy nhất
+**Giải thích chuyên sâu — Design by Contract**:
 
-**Ví dụ**:
-- **Ordering Service**: Order placement ONLY (not kitchen queue, not analytics)
-- **Kitchen Service**: Kitchen queue ONLY (not order placement, not inventory)
+LSP gắn liền với **Design by Contract** (Bertrand Meyer):
 
-**Kết quả**: Codebase < 10,000 LOC per service, dễ maintain
+| Thành phần | Định nghĩa | Ràng buộc LSP |
+|-----------|-----------|--------------|
+| **Precondition** | Điều kiện phải thỏa mãn TRƯỚC khi gọi method | Lớp con KHÔNG ĐƯỢC thắt chặt (strengthen) |
+| **Postcondition** | Điều kiện phải đúng SAU khi method hoàn thành | Lớp con KHÔNG ĐƯỢC nới lỏng (weaken) |
+| **Invariant** | Điều kiện luôn đúng trong suốt vòng đời object | Lớp con phải bảo toàn |
 
----
+**Ví dụ kinh điển — Rectangle vs Square**:
 
-### O - Open/Closed Principle (OCP)
-
-**Áp dụng**: Mở rộng nghiệp vụ mà không sửa đổi code cũ
-
-**Ví dụ**:
-- **Add new notification channel** (Telegram): Implement `NotificationChannel` interface, không sửa `NotificationService`
-- **Add new event subscriber**: Subscribe to Kafka topic, không sửa publisher
-
-**Kết quả**: Safe to add features (no regression bugs)
-
----
-
-### L - Liskov Substitution Principle (LSP)
-
-**Áp dụng**: Các interface cho phép thay thế linh hoạt
-
-**Ví dụ**:
-```java
-interface Database {
-    void save(Order order);
+```
+class Rectangle {
+    setWidth(w)  { this.width = w; }
+    setHeight(h) { this.height = h; }
+    getArea()    { return this.width * this.height; }
 }
 
-class PostgreSQLDatabase implements Database { ... }
-class MongoDBDatabase implements Database { ... }
+class Square extends Rectangle {
+    setWidth(w)  { this.width = w; this.height = w; }  // ❌ Vi phạm LSP!
+    setHeight(h) { this.width = h; this.height = h; }  // Postcondition lớp cha bị phá vỡ
+}
 
-// Can swap without breaking code
-Database db = new PostgreSQLDatabase();
-db = new MongoDBDatabase(); // Still works
+// Client code mong đợi: set width và height độc lập
+let rect = new Square();
+rect.setWidth(5);
+rect.setHeight(10);
+rect.getArea();  // Kỳ vọng 50, nhưng trả về 100 → BUG!
 ```
 
-**Kết quả**: Easy to test with mocks, easy to swap implementations
+Dù trong toán học "hình vuông **là** hình chữ nhật" (is-a), nhưng trong phần mềm — **Square vi phạm contract hành vi** của Rectangle.
+
+**Hướng dẫn áp dụng**: Trước khi tạo quan hệ kế thừa, luôn tự hỏi: "Nếu thay thế parent bằng child ở MỌI nơi, chương trình có hoạt động đúng không?" Nếu có bất kỳ nghi ngờ nào → dùng **composition thay vì inheritance**.
 
 ---
 
-### I - Interface Segregation Principle (ISP)
+#### 6.1.4. I — Interface Segregation Principle (ISP)
 
-**Áp dụng**: Interface nhỏ gọn cho từng nhóm thiết bị IoT
+**Phát biểu gốc**: *"Clients should not be forced to depend upon interfaces that they do not use."*
+— Robert C. Martin, *The Interface Segregation Principle* (1996)
 
-**Ví dụ**:
-```java
-// Good: Specific interfaces
-interface TemperatureSensor {
-    double getTemperature();
-}
+**Bối cảnh**: ISP xuất phát từ kinh nghiệm thực tế của Uncle Bob khi tư vấn cho Xerox. Một hệ thống máy in có Fat Interface chứa methods cho printing, stapling, và faxing — nhưng client chỉ cần print lại bị ép phụ thuộc vào toàn bộ.
 
-interface LoadCellSensor {
-    double getWeight();
-}
+**Giải thích chuyên sâu**:
 
-// Bad: Fat interface
-interface Sensor {
-    double getTemperature();
-    double getWeight();
-    double getHumidity();  // Not all sensors have this!
-}
-```
+ISP liên quan chặt chẽ đến khái niệm **Coupling qua Interface**. Khi client A phụ thuộc vào interface I chứa 10 methods nhưng chỉ dùng 2, thì:
+- Client A bị **recompile/redeploy** khi bất kỳ method nào trong I thay đổi (kể cả 8 method không liên quan).
+- Client A phải **mock 10 methods** trong unit test dù chỉ test 2.
 
-**Kết quả**: Cleaner code, easier to implement new sensor types
+**Chiến lược tách interface**:
+
+| Chiến lược | Mô tả | Khi nào dùng |
+|-----------|-------|-------------|
+| **Role Interface** | Tách theo vai trò client sử dụng | Khi các client nhóm rõ ràng |
+| **Header Interface** | Interface phản ánh đầy đủ class | Tránh — thường là Fat Interface |
+| **Interface Composition** | Class implement nhiều interface nhỏ | Khi đối tượng thực sự đa năng |
+
+**Mối liên hệ ISP ↔ SRP**: SRP tách class theo actor, ISP tách interface theo client. Cùng mục tiêu: **giảm coupling không cần thiết**.
 
 ---
 
-### D - Dependency Inversion Principle (DIP)
+#### 6.1.5. D — Dependency Inversion Principle (DIP)
 
-**Áp dụng**: Các module phụ thuộc vào abstraction thay vì implementation
+**Phát biểu gốc**:
+1. *"High-level modules should not depend on low-level modules. Both should depend on abstractions."*
+2. *"Abstractions should not depend on details. Details should depend on abstractions."*
+— Robert C. Martin, *The Dependency Inversion Principle* (1996)
 
-**Ví dụ**:
-```java
-// Good: Depend on interface
-class OrderingService {
-    private OrderRepository repository;  // Interface
+**Bối cảnh**: Trong kiến trúc truyền thống, luồng phụ thuộc đi cùng chiều với luồng điều khiển: `Application → Business Rules → Database`. DIP **đảo ngược** luồng phụ thuộc ở ranh giới giữa các tầng, trong khi giữ nguyên luồng điều khiển.
 
-    public void placeOrder(Order order) {
-        repository.save(order);
-    }
+**Giải thích chuyên sâu**:
+
+```
+Kiến trúc truyền thống (vi phạm DIP):
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Controller  │────▶│   Service   │────▶│  PostgreSQL  │
+└─────────────┘     └─────────────┘     └─────────────┘
+              depend →            depend →
+
+Kiến trúc DIP (Clean Architecture):
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Controller  │────▶│   Service   │────▶│ IRepository  │ ← Interface
+└─────────────┘     └─────────────┘     └──────┬──────┘
+                                               │ implements
+                                        ┌──────▼──────┐
+                                        │  PostgreSQL  │ ← Detail
+                                        └─────────────┘
+```
+
+**Kết quả của DIP**: Tầng Business Logic (Service) **không hề biết** tầng cơ sở dữ liệu tồn tại. Nó chỉ biết abstraction `IRepository`. Điều này cho phép:
+- **Test nhanh**: Inject `InMemoryRepository` trong unit test.
+- **Swap dễ dàng**: Thay PostgreSQL → MongoDB chỉ cần viết class mới implement `IRepository`.
+- **Build độc lập**: Service layer compile tách biệt, không cần database driver.
+
+**Cơ chế thực thi DIP**:
+
+| Cơ chế | Mô tả | Ví dụ framework |
+|--------|-------|----------------|
+| **Constructor Injection** | Truyền dependency qua constructor | Vanilla JS, mọi ngôn ngữ |
+| **Setter Injection** | Truyền qua setter method | Spring Framework |
+| **IoC Container** | Framework tự quản lý lifecycle và inject | NestJS, Spring Boot, InversifyJS |
+
+---
+
+### 6.2. Các Nguyên lý Kiến trúc Microservices Bổ trợ
+
+Ngoài SOLID (áp dụng ở cấp độ class/module), IRMS còn tuân thủ các nguyên lý thiết kế đặc thù cho **hệ thống phân tán (Distributed Systems)**, giúp đảm bảo hệ thống hoạt động ổn định trên quy mô nhiều service và nhiều node:
+
+#### Loose Coupling & High Cohesion
+
+**Định nghĩa**: Giảm thiểu phụ thuộc trực tiếp giữa các service (Loose Coupling), đồng thời gom logic liên quan vào cùng một domain boundary (High Cohesion).
+
+**Áp dụng tại IRMS**: Các service giao tiếp qua **Event-Driven Architecture (Kafka)** thay vì direct REST calls. `Ordering Service` chỉ publish event `OrderPlaced` — không biết ai đang lắng nghe.
+
+**Phục vụ NFR**: Scalability (scale từng service độc lập), Maintainability (< 2 tuần/feature).
+
+#### Design for Failure
+
+**Định nghĩa**: Trong hệ thống phân tán, lỗi là **tất yếu** (network partition, service crash, timeout). Hệ thống phải có cơ chế phục hồi tự động và suy giảm nhẹ nhàng (Graceful Degradation).
+
+**Áp dụng tại IRMS**:
+- **Circuit Breaker**: Ngắt kết nối tới service quá tải, trả fallback response.
+- **Retry with Exponential Backoff**: IoT Gateway buffer dữ liệu khi mất mạng, thử lại với delay tăng dần.
+- **Dead Letter Queue**: Event xử lý thất bại chuyển vào DLQ trên Kafka để trace lỗi.
+
+**Phục vụ NFR**: Fault Tolerance (99.5% uptime dù 10% device lỗi), Reliability.
+
+#### Stateless Services
+
+**Định nghĩa**: Application service không lưu client state (session) trong memory. Mọi thông tin cần thiết nằm trên request (JWT token) hoặc external store (Redis).
+
+**Áp dụng tại IRMS**: Kubernetes HPA có thể scale Ordering Service từ 2→5 pods trong 30 giây mà không lo mất session — vì mọi pod đều stateless.
+
+**Phục vụ NFR**: Scalability, Availability (99.9% uptime).
+
+#### Eventual Consistency
+
+**Định nghĩa**: Dựa theo CAP theorem, IRMS chọn **AP** (Availability + Partition Tolerance), chấp nhận dữ liệu giữa các service có thể nhất quán cuối cùng (eventual) thay vì ngay lập tức (strict).
+
+**Áp dụng tại IRMS**: Pattern SAGA (Choreography) — Ordering → Inventory → Kitchen qua events. Nếu Inventory trừ nguyên liệu thất bại, nó bắn `StockDeductionFailed` → Ordering chạy Compensating Transaction để hủy đơn.
+
+**Phục vụ NFR**: Reliability (0% order loss), Fault Tolerance.
+
+#### Defense in Depth
+
+**Định nghĩa**: Bảo mật đa tầng — mỗi tầng có cơ chế kiểm soát riêng, không dựa vào một điểm phòng thủ duy nhất.
+
+**Áp dụng tại IRMS**:
+- **Layer 1 (Network)**: Private subnet, ALB là điểm truy cập duy nhất.
+- **Layer 2 (API Gateway)**: JWT Authentication + TLS.
+- **Layer 3 (IoT)**: X.509 certificates + Mutual TLS (mTLS).
+- **Layer 4 (Application)**: RBAC (Role-Based Access Control).
+
+**Phục vụ NFR**: Security (zero breaches).
+
+---
+
+## 7. ÁP DỤNG NGUYÊN LÝ SOLID TRONG IRMS
+
+> **Liên kết với Mục 6**: Mỗi nguyên lý SOLID trình bày tại [Mục 6.1](#61-bộ-nguyên-lý-solid--tổng-quan) được minh chứng cụ thể bằng kiến trúc và code thực tế của IRMS.
+
+> **Ghi chú về code minh hoạ**: Các đoạn code trong mục này là **pseudo-code đã đơn giản hoá** để làm nổi bật ý tưởng thiết kế. Code thực tế trong codebase sử dụng CommonJS (`require`/`module.exports`) và có thêm error handling, logging. Link đến file gốc được cung cấp ở mỗi mục.
+
+> **Cấu trúc**: Mỗi nguyên lý trình bày theo: **Vấn đề → Áp dụng trong IRMS → Link codebase → Kết quả đạt được**.
+
+---
+
+### 7.1. S — Single Responsibility Principle trong IRMS
+
+*(Xem lý thuyết: [6.1.1 — SRP](#611-s--single-responsibility-principle-srp))*
+
+**Vấn đề nếu không áp dụng**: Nếu `OrderService` vừa validate, vừa trừ kho, vừa gửi notification, thì mỗi thay đổi nhỏ (đổi cách gửi email) buộc phải sửa class chứa toàn bộ logic đặt món → nguy cơ phá vỡ toàn bộ flow (Shotgun Surgery).
+
+**Áp dụng tại Service-Level**:
+
+| Service | Trách nhiệm DUY NHẤT (Actor) | KHÔNG phụ trách |
+|---------|-------------------------------|------------------|
+| **Ordering** | Tiếp nhận, validate, lưu đơn đặt món | Quản lý nguyên liệu, hiển thị bếp |
+| **Kitchen** | Quản lý queue bếp + KDS Display | Đặt món, xác thực người dùng |
+| **Inventory** | Giám sát và trừ nguyên liệu | Nấu bếp, gửi notification |
+| **Auth** | Xác thực và phân quyền | Nghiệp vụ đặt món hay bếp |
+| **Notification** | Gửi thông báo qua các kênh | Business logic của domain nào |
+
+**Áp dụng tại Class-Level (trong Ordering Service)**:
+
+```javascript
+// ✅ SRP: Mỗi class/module có DUY NHẤT một lý do thay đổi
+
+// Chỉ thay đổi khi quy tắc validation nghiệp vụ thay đổi
+class OrderValidator {
+  validate(dto) {
+    if (!dto.tableId) throw new Error('Table ID is required');
+    if (!dto.items?.length) throw new Error('Order must have items');
+    if (dto.items.some(i => i.quantity <= 0)) throw new Error('Invalid quantity');
+  }
 }
 
-// Bad: Depend on concrete class
-class OrderingService {
-    private PostgreSQLOrderRepository repository;  // Concrete!
+// Chỉ thay đổi khi quy trình orchestrate đặt món thay đổi
+class OrderPlacementService {
+  constructor(validator, repository, eventBus) {
+    this.validator = validator;
+    this.repository = repository;
+    this.eventBus = eventBus;
+  }
+  async placeOrder(dto) {
+    this.validator.validate(dto);
+    const order = Order.create(dto);
+    await this.repository.save(order);
+    await this.eventBus.publish('OrderPlaced', order);
+    return order;
+  }
+}
 
-    public void placeOrder(Order order) {
-        repository.save(order);
-    }
+// Chỉ thay đổi khi schema PostgreSQL thay đổi
+class PostgresOrderRepository {
+  async save(order) {
+    await db.query(
+      'INSERT INTO orders (id, table_id, items, status) VALUES ($1,$2,$3,$4)',
+      [order.id, order.tableId, JSON.stringify(order.items), order.status]
+    );
+  }
+}
+
+// ❌ Vi phạm SRP — God Class
+class BadOrderService {
+  async placeOrder(dto) {
+    // validate + save + publish + send email + deduct inventory — tất cả 1 chỗ!
+  }
 }
 ```
 
-**Kết quả**: Easy to test, easy to swap database
+**Xem codebase thực tế**:
+- Controller: `services/ordering-service/src/controllers/orderController.js`
+- Service: `services/ordering-service/src/services/OrderPlacementService.js`
+- Repository: `services/ordering-service/src/repositories/orderRepository.js`
+
+**Kết quả**: Mỗi service < 10,000 LOC. `OrderPlacementService` unit-test độc lập bằng cách mock `validator`, `repository`, `eventBus`.
+
+---
+
+### 7.2. O — Open/Closed Principle trong IRMS
+
+*(Xem lý thuyết: [6.1.2 — OCP](#612-o--openclosed-principle-ocp))*
+
+**Vấn đề nếu không áp dụng**: Nếu `NotificationService` có `if/switch` cho từng kênh, mỗi lần thêm kênh mới (Telegram, SMS) đều phải sửa class cũ → nguy cơ regression.
+
+**Áp dụng qua Strategy Pattern (Notification Service)**:
+
+```javascript
+// Interface — "hợp đồng" cố định, ĐÓNG để sửa
+class NotificationChannel {
+  async send(recipient, message) { throw new Error('Must implement send()'); }
+}
+
+// Các kênh hiện có — ĐÓNG để sửa
+class EmailNotificationChannel extends NotificationChannel {
+  async send(recipient, message) {
+    await emailClient.send({ to: recipient.email, body: message });
+  }
+}
+
+class SlackNotificationChannel extends NotificationChannel {
+  async send(recipient, message) {
+    await slackClient.postMessage({ channel: recipient.slackId, text: message });
+  }
+}
+
+// ✅ MỞ rộng: Thêm Telegram MÀ KHÔNG sửa bất kỳ class nào ở trên
+class TelegramNotificationChannel extends NotificationChannel {
+  async send(recipient, message) {
+    await telegramBot.sendMessage(recipient.chatId, message);
+  }
+}
+
+// AlertDispatcher — ĐÓNG, chỉ cần config routing cho kênh mới
+class AlertDispatcher {
+  constructor(channels) { this.channels = channels; }
+  async dispatch(recipient, message) {
+    await Promise.all(this.channels.map(ch => ch.send(recipient, message)));
+  }
+}
+```
+
+**Áp dụng qua Event-Driven Architecture (OCP cấp kiến trúc)**:
+
+```
+OrderPlaced (Kafka topic)
+    ├── Kitchen Service      (consumer hiện có — KHÔNG bị sửa)
+    ├── Inventory Service    (consumer hiện có — KHÔNG bị sửa)
+    ├── Analytics Service    ✅ Thêm mới — KHÔNG động đến publisher
+    └── AI Fraud Detection   ✅ Thêm mới — KHÔNG động đến publisher
+```
+
+**Xem codebase thực tế**:
+- Channels: `services/notification-service/src/channels/` (EmailChannel.js, SmsChannel.js, PushChannel.js)
+- Dispatcher: `services/notification-service/src/services/AlertDispatcher.js` (routing config-driven)
+
+**Kết quả**: Thêm kênh thông báo mới chỉ cần tạo file `XxxChannel.js` và thêm 1 dòng vào `ALERT_ROUTING` config — không sửa `AlertDispatcher` hay bất kỳ channel nào đang chạy.
+
+---
+
+### 7.3. L — Liskov Substitution Principle trong IRMS
+
+*(Xem lý thuyết: [6.1.3 — LSP](#613-l--liskov-substitution-principle-lsp))*
+
+**Vấn đề nếu không áp dụng**: Nếu `MongoOrderRepository` implements `IOrderRepository` nhưng `save()` throw `UnsupportedOperationException` → tất cả code dùng interface này sẽ crash khi swap.
+
+**Áp dụng qua Repository Pattern**:
+
+```javascript
+class IOrderRepository {
+  async save(order) {}
+  async findById(id) {}
+  async findByTableId(tableId) {}
+}
+
+// ✅ LSP: PostgresOrderRepository — tuân thủ đúng contract
+class PostgresOrderRepository extends IOrderRepository {
+  async save(order) {
+    await db.query('INSERT INTO orders ...', [order.id]);
+    // Postcondition: throw DatabaseError nếu thất bại — đúng contract
+  }
+  async findById(id) {
+    const row = await db.query('SELECT * FROM orders WHERE id=$1', [id]);
+    return row ? Order.fromRow(row) : null;
+  }
+  async findByTableId(tableId) {
+    const rows = await db.query('SELECT * FROM orders WHERE table_id=$1', [tableId]);
+    return rows.map(Order.fromRow);
+  }
+}
+
+// ✅ LSP: InMemoryOrderRepository — dùng cho testing, cùng contract
+class InMemoryOrderRepository extends IOrderRepository {
+  constructor() { this.store = new Map(); }
+  async save(order) { this.store.set(order.id, order); }
+  async findById(id) { return this.store.get(id) ?? null; }
+  async findByTableId(tableId) {
+    return [...this.store.values()].filter(o => o.tableId === tableId);
+  }
+}
+
+// Client code — hoạt động với BẤT KỲ implementation tuân thủ LSP
+class OrderPlacementService {
+  constructor(repository) { this.repository = repository; }
+  async placeOrder(dto) {
+    const order = Order.create(dto);
+    await this.repository.save(order); // production: Postgres | test: InMemory
+    return order;
+  }
+}
+```
+
+**Xem codebase thực tế**:
+- Repository: `services/ordering-service/src/repositories/orderRepository.js`
+
+**Kết quả**: Unit test `OrderPlacementService` dùng `InMemoryOrderRepository` chạy < 1ms, không cần kết nối DB thật.
+
+---
+
+### 7.4. I — Interface Segregation Principle trong IRMS
+
+*(Xem lý thuyết: [6.1.4 — ISP](#614-i--interface-segregation-principle-isp))*
+
+**Vấn đề nếu không áp dụng**: Nếu `ISensor` gộp tất cả methods (`getTemperature()`, `getWeight()`, `getHumidity()`, `getCO2()`), `LoadCellSensor` (cân bếp) bị buộc implement `getHumidity()` → phải throw `NotImplementedException`.
+
+**Áp dụng qua Role Interfaces (IoT Gateway Layer)**:
+
+```javascript
+// ✅ ISP: Tách theo vai trò — mỗi interface nhỏ gọn
+
+// Mọi sensor đều implement
+class IReadableSensor {
+  async readData() { throw new Error('Not implemented'); }
+  getId()   { throw new Error('Not implemented'); }
+  getType() { throw new Error('Not implemented'); }
+}
+
+// Chỉ sensor cần health-check implement
+class IHealthCheckable {
+  async isOnline() { throw new Error('Not implemented'); }
+  getLastHeartbeat() { throw new Error('Not implemented'); }
+}
+
+// Chỉ sensor nâng cao implement
+class IRemoteConfigurable {
+  async updateThreshold(value) { throw new Error('Not implemented'); }
+  async reboot() { throw new Error('Not implemented'); }
+}
+
+// TemperatureSensor: IReadableSensor + IHealthCheckable
+class TemperatureSensor extends IReadableSensor {
+  async readData() { return { type: 'temperature', value: 72.5, unit: '°C' }; }
+  getId()   { return this.sensorId; }
+  getType() { return 'TEMPERATURE'; }
+  async isOnline() { return this.lastPing > Date.now() - 60000; }
+}
+
+// BasicLoadCell: chỉ IReadableSensor — KHÔNG bị buộc implement isOnline()
+class BasicLoadCell extends IReadableSensor {
+  async readData() { return { type: 'weight', value: 2.3, unit: 'kg' }; }
+  getId()   { return this.cellId; }
+  getType() { return 'LOAD_CELL'; }
+}
+
+// ❌ Vi phạm ISP — Fat Interface
+class BadISensor {
+  async getTemperature() {} // LoadCell không có nhiệt kế!
+  async getHumidity() {}    // LoadCell không có ẩm kế!
+  async getWeight() {}
+  async getCO2() {}          // TemperatureSensor không có CO2!
+}
+```
+
+**Xem codebase thực tế**:
+- IoT Gateway: `services/iot-gateway/src/`
+
+**Kết quả**: Thêm loại sensor mới (VD: `CO2Sensor`) chỉ implement `IReadableSensor`, không sửa interface hiện có.
+
+---
+
+### 7.5. D — Dependency Inversion Principle trong IRMS
+
+*(Xem lý thuyết: [6.1.5 — DIP](#615-d--dependency-inversion-principle-dip))*
+
+**Vấn đề nếu không áp dụng**: Nếu `OrderPlacementService` dùng `new PostgreSQLOrderRepository()` bên trong, unit test cần database thật → CI pipeline chậm 10x và không chạy offline.
+
+**Áp dụng trong Service Layer**:
+
+```javascript
+// Abstractions — tầng trung gian
+class IOrderRepository { async save(order) {} async findById(id) {} }
+class IEventBus        { async publish(event, payload) {} }
+class IOrderValidator  { validate(dto) {} }
+
+// ✅ DIP: High-level phụ thuộc vào Abstraction
+class OrderPlacementService {
+  constructor(validator, repository, eventBus) {
+    this.validator  = validator;   // IOrderValidator
+    this.repository = repository;  // IOrderRepository
+    this.eventBus   = eventBus;    // IEventBus
+  }
+  async placeOrder(dto) {
+    this.validator.validate(dto);
+    const order = Order.create(dto);
+    await this.repository.save(order);
+    await this.eventBus.publish('OrderPlaced', { orderId: order.id });
+    return order;
+  }
+}
+
+// Low-level modules implement Abstraction
+class PostgresOrderRepository extends IOrderRepository {
+  async save(order) { await db.query('INSERT INTO orders ...'); }
+}
+class KafkaEventBus extends IEventBus {
+  async publish(event, payload) {
+    await kafkaProducer.send({ topic: event, messages: [{ value: JSON.stringify(payload) }] });
+  }
+}
+
+// ✅ Unit test — inject mock, KHÔNG cần infra thật
+const service = new OrderPlacementService(
+  new OrderValidator(),
+  new InMemoryOrderRepository(),  // mock
+  new InMemoryEventBus()           // mock
+);
+const order = await service.placeOrder(testDto);
+assert(order.status === 'PENDING'); // chạy < 5ms
+
+// ❌ Vi phạm DIP — hardcoded
+class BadOrderService {
+  constructor() {
+    this.repository = new PostgreSQLOrderRepository(); // hardcoded!
+    this.eventBus   = new KafkaProducer();             // hardcoded!
+  }
+}
+```
+
+**Áp dụng trong DI Container**:
+
+```javascript
+// Production wiring
+const container = {
+  validator:  new OrderValidator(),
+  repository: new PostgresOrderRepository(dbConfig),
+  eventBus:   new KafkaEventBus(kafkaConfig),
+};
+container.orderService = new OrderPlacementService(
+  container.validator,
+  container.repository,
+  container.eventBus
+);
+```
+
+**Xem codebase thực tế**:
+- Service: `services/ordering-service/src/services/OrderPlacementService.js`
+- Kafka config: `services/ordering-service/src/config/kafka.js`
+
+**Kết quả**: Unit test chạy < 5ms (in-memory), test coverage 85%+, CI không phụ thuộc external service.
+
+---
+
+### 7.6. Ma trận Liên kết Lý thuyết → Thực tiễn
+
+| Nguyên lý | Lý thuyết (Mục 6) | Áp dụng trong IRMS (Mục 7) | Kết quả đo lường |
+|-----------|-------------------|---------------------------|-----------------|
+| **S** — SRP | Module 1 lý do thay đổi (§6.1.1) | Controller / Service / Repository tách biệt | < 10,000 LOC/service; unit test độc lập |
+| **O** — OCP | Mở rộng không sửa code cũ (§6.1.2) | Strategy `NotificationChannel`; Kafka subscriber; `ALERT_ROUTING` config | Thêm kênh < 1 ngày, 0 regression |
+| **L** — LSP | Swap không phá vỡ behavior (§6.1.3) | `InMemoryOrderRepository` ↔ `PostgresOrderRepository` | Test < 1ms, không cần DB thật |
+| **I** — ISP | Client chỉ phụ thuộc interface cần (§6.1.4) | `IReadableSensor`, `IHealthCheckable`, `IRemoteConfigurable` | Thêm sensor không sửa interface cũ |
+| **D** — DIP | Phụ thuộc abstraction (§6.1.5) | Constructor Injection qua DI Container | Test coverage 85%+, CI pipeline nhanh |
 
 ---
 
