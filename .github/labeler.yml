@@ -1,0 +1,27 @@
+# Configuration for actions/labeler
+# https://github.com/actions/labeler
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/**/*'
+
+api-gateway:
+  - changed-files:
+      - any-glob-to-any-file: 'api-gateway/**/*'
+
+services:
+  - changed-files:
+      - any-glob-to-any-file: 'services/**/*'
+
+database:
+  - changed-files:
+      - any-glob-to-any-file: 'database/**/*'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**/*'
+      - any-glob-to-any-file: '**/*.md'
+
+github-actions:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**/*'
