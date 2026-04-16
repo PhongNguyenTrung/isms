@@ -3,11 +3,13 @@ import LiveMetrics from './components/LiveMetrics.jsx';
 import OrderFlowReport from './components/OrderFlowReport.jsx';
 import PredictiveInsights from './components/PredictiveInsights.jsx';
 import KitchenDisplay from './components/KitchenDisplay.jsx';
+import PaymentPanel from './components/PaymentPanel.jsx';
 import './App.css';
 
 const TABS = [
   { id: 'analytics', label: 'Phân tích' },
   { id: 'kds', label: 'Nhà bếp (KDS)' },
+  { id: 'payment', label: '💳 Thanh toán' },
 ];
 
 export default function App() {
@@ -41,6 +43,7 @@ export default function App() {
           </>
         )}
         {activeTab === 'kds' && <KitchenDisplay />}
+        {activeTab === 'payment' && <PaymentPanel />}
       </main>
     </div>
   );

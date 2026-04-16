@@ -1,10 +1,18 @@
+import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 
 const CATEGORY_LABELS = {
-  MAIN_DISH: 'Món chính',
+  MAIN_DISH: 'Lẩu',
   BEVERAGE: 'Đồ uống',
-  APPETIZER: 'Khai vị',
+  APPETIZER: 'Nguyên liệu nhúng',
   DESSERT: 'Tráng miệng',
+};
+
+const CATEGORY_ICONS = {
+  MAIN_DISH: '🍲',
+  APPETIZER: '🥩',
+  BEVERAGE: '🍵',
+  DESSERT: '🍮',
 };
 
 function formatPrice(price) {
@@ -14,7 +22,8 @@ function formatPrice(price) {
   }).format(Number(price));
 }
 
-export default function MenuCard({ item }) {
+export default function MenuCard({ item, onAdd }) {
+  const [imgError, setImgError] = useState(false);
   const { addItem, items } = useCart();
 
   const cartItem = items.find((i) => i.menuItem.id === item.id);
@@ -22,6 +31,19 @@ export default function MenuCard({ item }) {
 
   return (
     <div className="menu-card">
+      <div className="menu-card-image">
+        {item.image_url && !imgError ? (
+          <img
+            src={item.image_url}
+            alt={item.name_vi}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="menu-card-image-fallback">
+            {CATEGORY_ICONS[item.category] || '🍽️'}
+          </div>
+        )}
+      </div>
       <div className="menu-card-body">
         <div className="menu-card-category">
           {CATEGORY_LABELS[item.category] || item.category}
@@ -35,7 +57,7 @@ export default function MenuCard({ item }) {
           <span className="menu-card-price">{formatPrice(item.price)}</span>
           <button
             className={`btn-add ${qtyInCart > 0 ? 'btn-add--active' : ''}`}
-            onClick={() => addItem(item)}
+            onClick={() => { addItem(item); onAdd?.(item); }}
           >
             {qtyInCart > 0 ? `+1 (${qtyInCart})` : '+ Thêm'}
           </button>
