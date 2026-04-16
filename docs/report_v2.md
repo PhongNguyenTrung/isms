@@ -18,8 +18,6 @@
    - 4.3 [Module View](#43-module-view)
    - 4.4 [Component & Connector View](#44-component--connector-view)
    - 4.5 [Deployment View](#45-deployment-view)
-   - 4.6 [Runtime Scenarios](#46-runtime-scenarios)
-   - 4.7 [Architecture Decision Records](#47-architecture-decision-records)
 5. [Class Diagram](#5-class-diagram)
 6. [Design Principles](#6-design-principles)
    - 6.1 [Nguyên lý kiến trúc phân tán](#61-nguyên-lý-kiến-trúc-phân-tán)
@@ -710,49 +708,6 @@ GitHub Actions trigger khi có push vào branch `main`: build Docker image → p
 - **Backup**: cron job mỗi 6 giờ dump PostgreSQL và InfluxDB → nén → upload lên S3-compatible storage.
 - **Monitoring**: Uptime check 1 phút/lần cho endpoint công khai; log tập trung qua `docker logs` + rotate 7 ngày.
 - **Scale-up path**: khi cần mở rộng nhiều chi nhánh, có thể migrate lên Docker Swarm (thêm worker node) hoặc Kubernetes mà không cần thay đổi code — chỉ cần cập nhật orchestration config.
-
-### 4.6 Runtime Scenarios
-
-**S1 — Real-Time Order Placement** (luồng chính)
-
-```mermaid
-sequenceDiagram
-    participant C as Customer (Tablet)
-    participant GW as API Gateway
-    participant OS as Ordering Service
-    participant KF as Kafka
-    participant KS as Kitchen Service
-    participant KDS as KDS Display
-
-    C->>GW: POST /api/orders (JWT)
-    GW->>GW: Validate JWT (20ms)
-    GW->>OS: Forward request
-    OS->>OS: Validate items & calculate total (50ms)
-    OS->>OS: Save order to PostgreSQL (120ms)
-    OS->>KF: Publish OrderPlaced event (80ms)
-    KF->>KS: Consume event (20ms)
-    KS->>KS: Calculate priority score
-    KS->>KDS: Push via WebSocket (10ms)
-    Note over C,KDS: Total: ~300ms (< 1s ✅)
-```
-
-**S2 — Kitchen Overload**: Queue > 10 → Kitchen publish `KitchenOverload` → Notification Service gửi alert manager (< 50ms).
-
-**S4 — Sensor Failure**: IoT Gateway phát hiện sensor offline → dùng last known value → báo cáo manual fallback (2 min detection).
-
-### 4.7 Architecture Decision Records
-
-| ADR | Quyết định | Lý do | Trade-off |
-|-----|-----------|-------|-----------|
-| **ADR-001** | Microservices Architecture | Scale độc lập, fault isolation, tech diversity | Operational complexity ↑ |
-| **ADR-002** | Event-Driven (Kafka) | Real-time < 1s, loose coupling, fault tolerance | Eventual consistency |
-| **ADR-003** | Database per Service | Data autonomy, scale riêng, isolation | No cross-service ACID → SAGA |
-| **ADR-004** | IoT Gateway Layer | Protocol translation (MQTT→Kafka), edge buffering | Thêm 1 hop latency |
-| **ADR-005** | API Gateway (NGINX) | Centralized auth, routing, rate limiting | Potential bottleneck |
-| **ADR-006** | Kubernetes (AWS EKS) | Auto-scaling, self-healing, rolling updates | Learning curve |
-| **ADR-007** | Circuit Breaker Pattern | Ngăn cascade failure, graceful degradation | Cần configuration tuning |
-
----
 
 ## 5. Class Diagram
 
