@@ -1,10 +1,11 @@
 const orderRepository = require('../repositories/orderRepository');
 const OrderPlacementService = require('../services/OrderPlacementService');
+const { publishEvent } = require('../config/kafka');
 
 const placeOrder = async (req, res) => {
   try {
     const { tableId, items } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id ?? null;
 
     const order = await OrderPlacementService.placeOrder(userId, tableId, items);
 
@@ -61,5 +62,60 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-module.exports = { placeOrder, getTableOrders, getOrderById, cancelOrder };
+const getActiveTables = async (req, res) => {
+  try {
+    const tables = await orderRepository.getTablesWithActiveOrders();
+    return res.status(200).json(tables);
+  } catch (error) {
+    console.error('Error fetching active tables', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const completePayment = async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const updated = await orderRepository.completePaymentForTable(tableId);
+    if (updated === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn hàng đang hoạt động cho bàn này' });
+    }
+    await publishEvent('payment-completed', `payment-done-${tableId}`, {
+      tableId,
+      completedAt: new Date().toISOString(),
+    });
+    return res.status(200).json({ message: `Đã xác nhận thanh toán cho bàn ${tableId}`, updated });
+  } catch (error) {
+    console.error('Error completing payment', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const getTableBill = async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const bill = await orderRepository.getTableBill(tableId);
+    return res.status(200).json(bill);
+  } catch (error) {
+    console.error('Error fetching table bill', error);
+    return res.status(500).json({ message: 'Server error fetching bill' });
+  }
+};
+
+const requestPayment = async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const { grandTotal } = await orderRepository.getTableBill(tableId);
+    await publishEvent('payment-requests', `payment-${tableId}`, {
+      tableId,
+      grandTotal,
+      timestamp: new Date().toISOString(),
+    });
+    return res.status(200).json({ message: 'Đã gọi thanh toán, nhân viên sẽ đến ngay!' });
+  } catch (error) {
+    console.error('Error requesting payment', error);
+    return res.status(500).json({ message: 'Server error requesting payment' });
+  }
+};
+
+module.exports = { placeOrder, getTableOrders, getActiveTables, getTableBill, requestPayment, completePayment, getOrderById, cancelOrder };
 

@@ -21,3 +21,11 @@ export async function getOrder(orderId) {
 export async function cancelOrder(orderId) {
   return request(`/orders/${orderId}/cancel`, { method: 'PATCH' });
 }
+
+export async function getTableBill(tableId) {
+  return request(`/orders/table/${tableId}/bill`);
+}
+
+export async function requestPayment(tableId) {
+  return request(`/orders/table/${tableId}/request-payment`, { method: 'POST' });
+}

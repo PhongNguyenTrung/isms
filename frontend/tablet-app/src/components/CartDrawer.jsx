@@ -9,17 +9,12 @@ function formatPrice(price) {
   }).format(Number(price));
 }
 
-export default function CartDrawer({ onClose, onOrderSuccess }) {
+export default function CartDrawer({ tableId, onClose, onOrderSuccess }) {
   const { items, removeItem, updateQty, clearCart, total } = useCart();
-  const [tableId, setTableId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   async function handleSubmit() {
-    if (!tableId.trim()) {
-      setError('Vui lòng nhập số bàn');
-      return;
-    }
     if (items.length === 0) {
       setError('Giỏ hàng trống');
       return;
@@ -28,9 +23,9 @@ export default function CartDrawer({ onClose, onOrderSuccess }) {
     setError('');
     setLoading(true);
     try {
-      const result = await placeOrder(tableId.trim(), items);
+      const result = await placeOrder(tableId, items);
       clearCart();
-      onOrderSuccess(result.order, tableId);
+      onOrderSuccess(result.order);
     } catch (err) {
       setError(err.message || 'Đặt món thất bại, vui lòng thử lại');
     } finally {
@@ -91,17 +86,6 @@ export default function CartDrawer({ onClose, onOrderSuccess }) {
           <div className="total-row">
             <span>Tổng cộng</span>
             <strong>{formatPrice(total)}</strong>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="tableId">Số bàn</label>
-            <input
-              id="tableId"
-              type="text"
-              value={tableId}
-              onChange={(e) => setTableId(e.target.value)}
-              placeholder="VD: T01, T02..."
-            />
           </div>
 
           {error && <div className="error-message">{error}</div>}

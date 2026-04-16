@@ -38,6 +38,33 @@ const getOrdersByTable = async (tableId) => {
   return result.rows;
 };
 
+const getTableBill = async (tableId) => {
+  const result = await db.query(
+    `SELECT
+       o.*,
+       COALESCE(json_agg(
+         json_build_object(
+           'id',                   oi.id,
+           'menu_item_id',         oi.menu_item_id,
+           'name',                 mi.name_vi,
+           'quantity',             oi.quantity,
+           'price',                mi.price,
+           'special_instructions', oi.special_instructions
+         )
+       ) FILTER (WHERE oi.id IS NOT NULL), '[]') AS items
+     FROM orders o
+     LEFT JOIN order_items oi ON o.id = oi.order_id
+     LEFT JOIN menu_items  mi ON oi.menu_item_id = mi.id
+     WHERE o.table_id = $1 AND o.status NOT IN ('CANCELLED', 'COMPLETED')
+     GROUP BY o.id
+     ORDER BY o.created_at ASC`,
+    [tableId]
+  );
+  const orders = result.rows;
+  const grandTotal = orders.reduce((sum, o) => sum + Number(o.total_price), 0);
+  return { orders, grandTotal };
+};
+
 const getOrderById = async (orderId) => {
   const orderResult = await db.query('SELECT * FROM orders WHERE id = $1', [orderId]);
   if (orderResult.rows.length === 0) return null;
@@ -58,9 +85,37 @@ const updateOrderStatus = async (orderId, status) => {
   return result.rows[0];
 };
 
+const getTablesWithActiveOrders = async () => {
+  const result = await db.query(
+    `SELECT table_id,
+            COUNT(*)::int          AS order_count,
+            SUM(total_price)       AS grand_total,
+            MIN(created_at)        AS first_order_at
+     FROM orders
+     WHERE status NOT IN ('CANCELLED', 'COMPLETED')
+     GROUP BY table_id
+     ORDER BY first_order_at ASC`
+  );
+  return result.rows;
+};
+
+const completePaymentForTable = async (tableId) => {
+  const result = await db.query(
+    `UPDATE orders
+     SET status = 'COMPLETED'
+     WHERE table_id = $1 AND status NOT IN ('CANCELLED', 'COMPLETED')
+     RETURNING id`,
+    [tableId]
+  );
+  return result.rowCount;
+};
+
 module.exports = {
   createOrder,
   getOrdersByTable,
+  getTableBill,
+  getTablesWithActiveOrders,
+  completePaymentForTable,
   getOrderById,
   updateOrderStatus
 };
