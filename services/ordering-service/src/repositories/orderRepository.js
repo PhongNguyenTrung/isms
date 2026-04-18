@@ -15,14 +15,19 @@ const createOrder = async (userId, tableId, items, totalPrice) => {
     const orderItems = [];
 
     for (const item of items) {
-      const orderItemResult = await client.query(
-        'INSERT INTO order_items (order_id, menu_item_id, quantity, special_instructions) VALUES ($1, $2, $3, $4) RETURNING *',
+      await client.query(
+        'INSERT INTO order_items (order_id, menu_item_id, quantity, special_instructions) VALUES ($1, $2, $3, $4)',
         [order.id, item.menuItemId, item.quantity, item.specialInstructions || '']
       );
-      orderItems.push(orderItemResult.rows[0]);
     }
 
     await client.query('COMMIT');
+
+    const itemsResult = await client.query(
+      'SELECT oi.*, mi.name_vi AS name, mi.name_en, mi.category FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = $1',
+      [order.id]
+    );
+    orderItems.push(...itemsResult.rows);
 
     return { ...order, items: orderItems };
   } catch (error) {
@@ -99,6 +104,30 @@ const getTablesWithActiveOrders = async () => {
   return result.rows;
 };
 
+const getAllActiveOrders = async () => {
+  const result = await db.query(
+    `SELECT
+       o.*,
+       COALESCE(json_agg(
+         json_build_object(
+           'id',                   oi.id,
+           'menu_item_id',         oi.menu_item_id,
+           'name',                 mi.name_vi,
+           'quantity',             oi.quantity,
+           'price',                mi.price,
+           'special_instructions', oi.special_instructions
+         )
+       ) FILTER (WHERE oi.id IS NOT NULL), '[]') AS items
+     FROM orders o
+     LEFT JOIN order_items oi ON o.id = oi.order_id
+     LEFT JOIN menu_items  mi ON oi.menu_item_id = mi.id
+     WHERE o.status NOT IN ('CANCELLED', 'COMPLETED')
+     GROUP BY o.id
+     ORDER BY o.created_at ASC`
+  );
+  return result.rows;
+};
+
 const completePaymentForTable = async (tableId) => {
   const result = await db.query(
     `UPDATE orders
@@ -115,6 +144,7 @@ module.exports = {
   getOrdersByTable,
   getTableBill,
   getTablesWithActiveOrders,
+  getAllActiveOrders,
   completePaymentForTable,
   getOrderById,
   updateOrderStatus

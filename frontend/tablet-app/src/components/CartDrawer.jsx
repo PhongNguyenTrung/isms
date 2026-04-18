@@ -24,8 +24,15 @@ export default function CartDrawer({ tableId, onClose, onOrderSuccess }) {
     setLoading(true);
     try {
       const result = await placeOrder(tableId, items);
+      const orderWithNames = {
+        ...result.order,
+        items: (result.order.items || []).map((serverItem) => {
+          const cartItem = items.find((i) => i.menuItem.id === serverItem.menu_item_id);
+          return cartItem ? { ...serverItem, name: cartItem.menuItem.name_vi } : serverItem;
+        }),
+      };
       clearCart();
-      onOrderSuccess(result.order);
+      onOrderSuccess(orderWithNames);
     } catch (err) {
       setError(err.message || 'Đặt món thất bại, vui lòng thử lại');
     } finally {

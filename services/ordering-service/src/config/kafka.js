@@ -11,6 +11,7 @@ const kafka = new Kafka({
 });
 
 const producer = kafka.producer();
+const consumer = kafka.consumer({ groupId: 'ordering-ready-group' });
 
 const connectProducer = async () => {
   try {
@@ -18,6 +19,28 @@ const connectProducer = async () => {
     console.log('Successfully connected to Kafka producer');
   } catch (error) {
     console.error('Failed to connect to Kafka', error);
+  }
+};
+
+const connectConsumer = async () => {
+  // Lazy require to avoid circular dependency
+  const orderRepository = require('../repositories/orderRepository');
+  try {
+    await consumer.connect();
+    await consumer.subscribe({ topic: 'kitchen_ready', fromBeginning: false });
+    await consumer.run({
+      eachMessage: async ({ message }) => {
+        try {
+          const { orderId } = JSON.parse(message.value.toString());
+          await orderRepository.updateOrderStatus(orderId, 'READY');
+          console.log(`[ordering] Order ${orderId} marked READY`);
+        } catch (err) {
+          console.error('[ordering] Error processing kitchen_ready:', err);
+        }
+      },
+    });
+  } catch (error) {
+    console.error('Failed to connect Kafka consumer', error);
   }
 };
 
@@ -35,4 +58,4 @@ const publishEvent = async (topic, key, message) => {
   }
 };
 
-module.exports = { connectProducer, publishEvent };
+module.exports = { connectProducer, connectConsumer, publishEvent };

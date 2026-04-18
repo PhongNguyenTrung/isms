@@ -29,6 +29,8 @@ export default function MenuPage({ tableId, onOrderSuccess }) {
   // Active orders badge
   const [hasActiveOrders, setHasActiveOrders] = useState(false);
   const billPollRef = useRef(null);
+  const [readyAlert, setReadyAlert] = useState(false);
+  const prevStatusesRef = useRef({});
 
   // Category nav
   const [activeCategory, setActiveCategory] = useState(CATEGORY_ORDER[0]);
@@ -45,15 +47,22 @@ export default function MenuPage({ tableId, onOrderSuccess }) {
     };
   }, []);
 
-  // Poll bill to detect active orders → show badge on 🧾
+  // Poll bill to detect active orders + READY transitions
   useEffect(() => {
     const check = async () => {
       try {
         const data = await getTableBill(tableId);
-        const active = data?.orders?.some(
-          (o) => !['COMPLETED', 'CANCELLED'].includes(o.status)
-        );
+        const orders = data?.orders ?? [];
+        const active = orders.some((o) => !['COMPLETED', 'CANCELLED'].includes(o.status));
         setHasActiveOrders(!!active);
+
+        // Detect any order that just became READY
+        const newlyReady = orders.some(
+          (o) => o.status === 'READY' && prevStatusesRef.current[o.id] !== 'READY'
+        );
+        if (newlyReady) setReadyAlert(true);
+        orders.forEach((o) => { prevStatusesRef.current[o.id] = o.status; });
+
         if (!active) {
           clearInterval(billPollRef.current);
           billPollRef.current = null;
@@ -171,6 +180,13 @@ export default function MenuPage({ tableId, onOrderSuccess }) {
           </section>
         ))}
       </main>
+
+      {readyAlert && (
+        <div className="ready-alert" onClick={() => { setReadyAlert(false); setShowBill(true); }}>
+          🍲 Món của bạn đã sẵn sàng! Nhấn để xem bill.
+          <button className="ready-alert-close" onClick={(e) => { e.stopPropagation(); setReadyAlert(false); }}>✕</button>
+        </div>
+      )}
 
       <div className={`toast${toast ? ' toast--visible' : ''}`}>
         <span className="toast-check">✓</span>

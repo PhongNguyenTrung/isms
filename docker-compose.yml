@@ -121,6 +121,8 @@ services:
       DB_PORT: 5432
       DB_NAME: irms_db
       KAFKA_BROKERS: kafka:29092
+    volumes:
+      - menu_uploads:/usr/src/app/uploads
     networks:
       - irms-network
 
@@ -132,6 +134,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+    ports:
+      - "3003:3003"
     environment:
       PORT: 3003
       JWT_SECRET: super_secret_jwt_key_for_irms_development
@@ -247,6 +251,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+    ports:
+      - "3007:3007"
     environment:
       PORT: 3007
       DB_USER: irms_user
@@ -262,10 +268,13 @@ services:
 
   # ----------------------------------------------------------------------------
   # Frontend — Tablet Ordering App
+  # profile "frontend": chỉ chạy khi deploy production
+  # Dev: chạy local bằng `npm run dev` (hot reload qua Vite proxy)
   # ----------------------------------------------------------------------------
   tablet-app:
     build: ./frontend/tablet-app
     container_name: irms-tablet
+    profiles: ["frontend"]
     ports:
       - "3000:80"
     depends_on:
@@ -276,6 +285,7 @@ services:
   manager-dashboard:
     build: ./frontend/manager-dashboard
     container_name: irms-manager
+    profiles: ["frontend"]
     ports:
       - "3001:80"
     depends_on:
@@ -311,3 +321,4 @@ volumes:
   mosquitto_data:
   mosquitto_log:
   influxdb_data:
+  menu_uploads:

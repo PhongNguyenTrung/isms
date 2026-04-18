@@ -2,12 +2,16 @@ const express = require('express');
 const router = express.Router();
 const KitchenQueueManager = require('../services/KitchenQueueManager');
 const { getBroadcast } = require('../socket/kdsSocket');
+const { verifyToken, verifyRole } = require('../middlewares/authMiddleware');
+
+const KDS_VIEWERS = ['CHEF', 'MANAGER', 'WAITER'];
+const KDS_UPDATERS = ['CHEF', 'MANAGER'];
 
 /**
  * GET /api/kitchen/tasks
  * Returns all active kitchen tasks ordered by priority (FR5)
  */
-router.get('/tasks', async (req, res) => {
+router.get('/tasks', verifyToken, verifyRole(KDS_VIEWERS), async (req, res) => {
   try {
     const tasks = await KitchenQueueManager.getActiveTasks();
     res.json(tasks);
@@ -22,7 +26,7 @@ router.get('/tasks', async (req, res) => {
  * Chef updates task status via REST (FR6).
  * Delegates to KitchenQueueManager so broadcast + kitchen_completed event fire correctly.
  */
-router.patch('/tasks/:taskId/status', async (req, res) => {
+router.patch('/tasks/:taskId/status', verifyToken, verifyRole(KDS_UPDATERS), async (req, res) => {
   try {
     const { taskId } = req.params;
     const { status } = req.body;
