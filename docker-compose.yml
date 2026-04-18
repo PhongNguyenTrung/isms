@@ -121,6 +121,8 @@ services:
       DB_PORT: 5432
       DB_NAME: irms_db
       KAFKA_BROKERS: kafka:29092
+    volumes:
+      - menu_uploads:/usr/src/app/uploads
     networks:
       - irms-network
 
@@ -319,3 +321,4 @@ volumes:
   mosquitto_data:
   mosquitto_log:
   influxdb_data:
+  menu_uploads:

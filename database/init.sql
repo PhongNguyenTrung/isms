@@ -76,6 +76,17 @@ INSERT INTO menu_items (name_vi, name_en, description, price, category, is_avail
 ('Chè Trôi Nước', 'Sweet Dumpling Soup', 'Bánh trôi nhân vừng đen trong nước đường gừng ấm', 45000, 'DESSERT', true, 'https://cdn.tgdd.vn/Files/2021/09/08/1381061/cach-lam-che-troi-nuoc-ngu-sac-mem-deo-dai-ngon-khong-bi-cung-202109081319439786.jpg')
 ON CONFLICT DO NOTHING;
 
+-- QR session tokens: mỗi bàn có 1 token random, không lộ tableId trên URL
+CREATE TABLE IF NOT EXISTS table_sessions (
+    id SERIAL PRIMARY KEY,
+    table_id VARCHAR(50) NOT NULL,
+    token VARCHAR(64) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    invalidated_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_table_sessions_token ON table_sessions(token);
+
 CREATE TABLE IF NOT EXISTS kitchen_tasks (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
@@ -83,6 +94,7 @@ CREATE TABLE IF NOT EXISTS kitchen_tasks (
     items JSONB NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
     priority_score NUMERIC(4,1) DEFAULT 0,
+    station VARCHAR(50) DEFAULT 'Bếp chính',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -104,6 +104,30 @@ const getTablesWithActiveOrders = async () => {
   return result.rows;
 };
 
+const getAllActiveOrders = async () => {
+  const result = await db.query(
+    `SELECT
+       o.*,
+       COALESCE(json_agg(
+         json_build_object(
+           'id',                   oi.id,
+           'menu_item_id',         oi.menu_item_id,
+           'name',                 mi.name_vi,
+           'quantity',             oi.quantity,
+           'price',                mi.price,
+           'special_instructions', oi.special_instructions
+         )
+       ) FILTER (WHERE oi.id IS NOT NULL), '[]') AS items
+     FROM orders o
+     LEFT JOIN order_items oi ON o.id = oi.order_id
+     LEFT JOIN menu_items  mi ON oi.menu_item_id = mi.id
+     WHERE o.status NOT IN ('CANCELLED', 'COMPLETED')
+     GROUP BY o.id
+     ORDER BY o.created_at ASC`
+  );
+  return result.rows;
+};
+
 const completePaymentForTable = async (tableId) => {
   const result = await db.query(
     `UPDATE orders
@@ -120,6 +144,7 @@ module.exports = {
   getOrdersByTable,
   getTableBill,
   getTablesWithActiveOrders,
+  getAllActiveOrders,
   completePaymentForTable,
   getOrderById,
   updateOrderStatus

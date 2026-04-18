@@ -1,6 +1,8 @@
 const orderRepository = require('../repositories/orderRepository');
 const OrderPlacementService = require('../services/OrderPlacementService');
+const tableSessionRepository = require('../repositories/tableSessionRepository');
 const { publishEvent } = require('../config/kafka');
+const db = require('../config/db');
 
 const placeOrder = async (req, res) => {
   try {
@@ -44,6 +46,48 @@ const getOrderById = async (req, res) => {
   }
 };
 
+const getActiveOrders = async (req, res) => {
+  try {
+    const orders = await orderRepository.getAllActiveOrders();
+    return res.status(200).json(orders);
+  } catch (error) {
+    console.error('Error fetching active orders', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const confirmOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await orderRepository.getOrderById(id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'PLACED') {
+      return res.status(400).json({ message: `Không thể tiếp nhận đơn có trạng thái ${order.status}` });
+    }
+    const updated = await orderRepository.updateOrderStatus(id, 'CONFIRMED');
+
+    // Publish to Kafka → kitchen-service tạo task PENDING
+    await publishEvent('orders', `order-${order.id}`, {
+      orderId: order.id,
+      tableId: order.table_id,
+      items: order.items.map((i) => ({
+        menuItemId: i.menu_item_id,
+        quantity: i.quantity,
+        name: i.name,
+        category: i.category,
+        specialInstructions: i.special_instructions,
+      })),
+      total_price: order.total_price,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.status(200).json({ message: 'Đã tiếp nhận đơn', order: updated });
+  } catch (error) {
+    console.error('Error confirming order', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -55,7 +99,14 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ message: `Cannot cancel order with status ${order.status}` });
     }
     const updated = await orderRepository.updateOrderStatus(id, 'CANCELLED');
-    return res.status(200).json({ message: 'Order cancelled', order: updated });
+
+    // Huỷ kitchen task nếu chưa hoàn thành (dùng shared DB)
+    await db.query(
+      "UPDATE kitchen_tasks SET status = 'CANCELLED' WHERE order_id = $1 AND status NOT IN ('COMPLETED', 'CANCELLED')",
+      [id]
+    );
+
+    return res.status(200).json({ message: 'Đã từ chối đơn', order: updated });
   } catch (error) {
     console.error('Error cancelling order', error);
     return res.status(500).json({ message: 'Server error cancelling order' });
@@ -83,6 +134,10 @@ const completePayment = async (req, res) => {
       tableId,
       completedAt: new Date().toISOString(),
     });
+
+    // Invalidate QR session — bàn đã thanh toán, token cũ không dùng được nữa
+    await tableSessionRepository.invalidateByTableId(tableId);
+
     return res.status(200).json({ message: `Đã xác nhận thanh toán cho bàn ${tableId}`, updated });
   } catch (error) {
     console.error('Error completing payment', error);
@@ -117,5 +172,5 @@ const requestPayment = async (req, res) => {
   }
 };
 
-module.exports = { placeOrder, getTableOrders, getActiveTables, getTableBill, requestPayment, completePayment, getOrderById, cancelOrder };
+module.exports = { placeOrder, getTableOrders, getActiveTables, getActiveOrders, getTableBill, requestPayment, completePayment, getOrderById, confirmOrder, cancelOrder };
 
