@@ -31,7 +31,7 @@ class OrderPlacementService {
       }
 
       totalPrice += Number(menuItem.price) * item.quantity;
-      validatedItems.push({ ...item, category: menuItem.category });
+      validatedItems.push({ ...item, name: menuItem.name_vi, category: menuItem.category });
     }
 
     return { totalPrice, validatedItems };

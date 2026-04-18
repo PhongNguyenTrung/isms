@@ -4,16 +4,27 @@ import OrderFlowReport from './components/OrderFlowReport.jsx';
 import PredictiveInsights from './components/PredictiveInsights.jsx';
 import KitchenDisplay from './components/KitchenDisplay.jsx';
 import PaymentPanel from './components/PaymentPanel.jsx';
+import LoginPage from './components/LoginPage.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import './App.css';
 
-const TABS = [
-  { id: 'analytics', label: 'Phân tích' },
-  { id: 'kds', label: 'Nhà bếp (KDS)' },
-  { id: 'payment', label: '💳 Thanh toán' },
+const ALL_TABS = [
+  { id: 'analytics', label: 'Phân tích', roles: ['MANAGER'] },
+  { id: 'kds', label: 'Nhà bếp (KDS)', roles: ['MANAGER', 'CHEF', 'WAITER'] },
+  { id: 'payment', label: 'Thanh toán', roles: ['MANAGER', 'CASHIER'] },
 ];
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('analytics');
+const ROLE_LABELS = {
+  MANAGER: 'Quản lý',
+  CHEF: 'Đầu bếp',
+  WAITER: 'Phục vụ',
+  CASHIER: 'Thu ngân',
+};
+
+function Dashboard() {
+  const { user, logout } = useAuth();
+  const visibleTabs = ALL_TABS.filter((t) => t.roles.includes(user.role));
+  const [activeTab, setActiveTab] = useState(visibleTabs[0]?.id || '');
 
   return (
     <div className="dashboard">
@@ -21,7 +32,7 @@ export default function App() {
         <div className="dash-logo">IRMS</div>
         <div className="dash-title">Manager Dashboard</div>
         <nav className="dash-nav">
-          {TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               className={`tab-btn ${activeTab === tab.id ? 'tab-btn--active' : ''}`}
@@ -31,7 +42,11 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="dash-time">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        <div className="dash-user">
+          <span className="dash-username">{user.username}</span>
+          <span className="dash-role-badge">{ROLE_LABELS[user.role] || user.role}</span>
+          <button className="btn-logout" onClick={logout}>Đăng xuất</button>
+        </div>
       </header>
 
       <main className="dash-main">
@@ -42,9 +57,22 @@ export default function App() {
             <PredictiveInsights />
           </>
         )}
-        {activeTab === 'kds' && <KitchenDisplay />}
+        {activeTab === 'kds' && <KitchenDisplay canUpdate={['MANAGER', 'CHEF'].includes(user.role)} />}
         {activeTab === 'payment' && <PaymentPanel />}
       </main>
     </div>
+  );
+}
+
+function AppContent() {
+  const { user } = useAuth();
+  return user ? <Dashboard /> : <LoginPage />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

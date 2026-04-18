@@ -4,10 +4,10 @@ const { placeOrder, getTableOrders, getActiveTables, getTableBill, requestPaymen
 const { verifyToken, verifyRole } = require('../middlewares/authMiddleware');
 
 router.post('/', placeOrder);
-router.get('/active-tables', getActiveTables);
+router.get('/active-tables', verifyToken, verifyRole(['CASHIER', 'MANAGER']), getActiveTables);
 router.get('/table/:tableId/bill', getTableBill);
 router.post('/table/:tableId/request-payment', requestPayment);
-router.post('/table/:tableId/complete-payment', completePayment);
+router.post('/table/:tableId/complete-payment', verifyToken, verifyRole(['CASHIER', 'MANAGER']), completePayment);
 router.get('/table/:tableId', verifyToken, verifyRole(['WAITER', 'MANAGER', 'CHEF']), getTableOrders);
 router.get('/:id', getOrderById);
 router.patch('/:id/cancel', verifyToken, verifyRole(['CUSTOMER', 'WAITER', 'MANAGER']), cancelOrder);

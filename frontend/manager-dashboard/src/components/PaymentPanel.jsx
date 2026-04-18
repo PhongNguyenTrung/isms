@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const API = '/api/orders';
 
@@ -11,6 +12,7 @@ function formatTime(iso) {
 }
 
 export default function PaymentPanel() {
+  const { token } = useAuth();
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(null); // tableId being confirmed
@@ -21,9 +23,11 @@ export default function PaymentPanel() {
     return () => clearInterval(interval);
   }, []);
 
+  const authHeaders = { Authorization: `Bearer ${token}` };
+
   async function fetchTables() {
     try {
-      const res = await fetch(`${API}/active-tables`);
+      const res = await fetch(`${API}/active-tables`, { headers: authHeaders });
       const data = await res.json();
       setTables(Array.isArray(data) ? data : []);
     } catch {
@@ -36,7 +40,10 @@ export default function PaymentPanel() {
   async function handleConfirm(tableId) {
     setConfirming(tableId);
     try {
-      const res = await fetch(`${API}/table/${tableId}/complete-payment`, { method: 'POST' });
+      const res = await fetch(`${API}/table/${tableId}/complete-payment`, {
+        method: 'POST',
+        headers: authHeaders,
+      });
       if (res.ok) {
         setTables((prev) => prev.filter((t) => t.table_id !== tableId));
       }

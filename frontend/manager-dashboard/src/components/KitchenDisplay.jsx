@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { useAuth } from '../context/AuthContext';
 
 const STATUS_LABELS = {
   PENDING: 'Chờ xử lý',
@@ -15,7 +16,7 @@ const STATUS_COLORS = {
   COMPLETED: '#64748b',
 };
 
-function TaskCard({ task, onUpdateStatus }) {
+function TaskCard({ task, onUpdateStatus, canUpdate }) {
   const items = typeof task.items === 'string' ? JSON.parse(task.items) : task.items;
   const elapsed = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 60000);
 
@@ -34,7 +35,7 @@ function TaskCard({ task, onUpdateStatus }) {
         {items && items.map((item, idx) => (
           <li key={idx}>
             <span className="item-qty">x{item.quantity}</span>
-            <span className="item-name">{item.category || ''} #{item.menuItemId || item.menu_item_id}</span>
+            <span className="item-name">{item.name || `${item.category || ''} #${item.menuItemId || item.menu_item_id}`}</span>
             {item.specialInstructions && (
               <span className="item-note">{item.specialInstructions}</span>
             )}
@@ -47,7 +48,7 @@ function TaskCard({ task, onUpdateStatus }) {
           {STATUS_LABELS[task.status]}
         </span>
         <span className="task-priority">Ưu tiên: {task.priority_score}</span>
-        {next && (
+        {canUpdate && next && (
           <button className="btn-status" onClick={() => onUpdateStatus(task.id, next)}>
             {STATUS_LABELS[next]} →
           </button>
@@ -57,7 +58,8 @@ function TaskCard({ task, onUpdateStatus }) {
   );
 }
 
-export default function KitchenDisplay() {
+export default function KitchenDisplay({ canUpdate = false }) {
+  const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [connected, setConnected] = useState(false);
   const [overloadAlert, setOverloadAlert] = useState(null);
@@ -65,7 +67,7 @@ export default function KitchenDisplay() {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    const socket = io('/', { path: '/socket.io' });
+    const socket = io('/', { path: '/socket.io', auth: { token } });
     socketRef.current = socket;
 
     socket.on('connect', () => setConnected(true));
@@ -148,7 +150,7 @@ export default function KitchenDisplay() {
       ) : (
         <div className="task-grid">
           {sorted.map((task) => (
-            <TaskCard key={task.id} task={task} onUpdateStatus={updateStatus} />
+            <TaskCard key={task.id} task={task} onUpdateStatus={updateStatus} canUpdate={canUpdate} />
           ))}
         </div>
       )}

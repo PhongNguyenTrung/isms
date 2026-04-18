@@ -15,14 +15,19 @@ const createOrder = async (userId, tableId, items, totalPrice) => {
     const orderItems = [];
 
     for (const item of items) {
-      const orderItemResult = await client.query(
-        'INSERT INTO order_items (order_id, menu_item_id, quantity, special_instructions) VALUES ($1, $2, $3, $4) RETURNING *',
+      await client.query(
+        'INSERT INTO order_items (order_id, menu_item_id, quantity, special_instructions) VALUES ($1, $2, $3, $4)',
         [order.id, item.menuItemId, item.quantity, item.specialInstructions || '']
       );
-      orderItems.push(orderItemResult.rows[0]);
     }
 
     await client.query('COMMIT');
+
+    const itemsResult = await client.query(
+      'SELECT oi.*, mi.name_vi AS name, mi.name_en, mi.category FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = $1',
+      [order.id]
+    );
+    orderItems.push(...itemsResult.rows);
 
     return { ...order, items: orderItems };
   } catch (error) {

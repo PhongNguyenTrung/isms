@@ -8,12 +8,26 @@ const addOrderToQueue = async (orderId, tableId, items, priorityScore) => {
   return result.rows[0];
 };
 
+const ORDER_STATUS_MAP = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  READY: 'READY',
+};
+
 const updateTaskStatus = async (taskId, status) => {
   const result = await db.query(
     'UPDATE kitchen_tasks SET status = $1 WHERE id = $2 RETURNING *',
     [status, taskId]
   );
-  return result.rows[0];
+  const task = result.rows[0];
+
+  if (task && ORDER_STATUS_MAP[status]) {
+    await db.query(
+      "UPDATE orders SET status = $1 WHERE id = $2 AND status NOT IN ('COMPLETED', 'CANCELLED')",
+      [ORDER_STATUS_MAP[status], task.order_id]
+    );
+  }
+
+  return task;
 };
 
 const getActiveTasks = async () => {
