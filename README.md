@@ -1,12 +1,21 @@
-# IRMS — Intelligent Restaurant Management System
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="IRMS — Intelligent Restaurant Management System" width="100%"/>
+</p>
 
-> An IoT-enabled, event-driven microservices platform that automates ordering, kitchen coordination, inventory tracking, and operational analytics for modern restaurants.
+<h1 align="center">IRMS — Intelligent Restaurant Management System</h1>
 
-[![Architecture](https://img.shields.io/badge/architecture-microservices-blue)](docs/architecture/01-overview.md)
-[![Communication](https://img.shields.io/badge/communication-event--driven-orange)](docs/diagrams/architecture/event-driven-architecture.md)
-[![Node.js](https://img.shields.io/badge/node.js-%E2%89%A520.x-339933?logo=node.js&logoColor=white)](https://nodejs.org)
-[![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
-[![License](https://img.shields.io/badge/license-Academic-lightgrey)](#license)
+<p align="center">
+  <em>An IoT-enabled, event-driven microservices platform that automates ordering, kitchen coordination,<br/>
+  inventory tracking, and operational analytics for modern restaurants.</em>
+</p>
+
+<p align="center">
+  <a href="docs/architecture/01-overview.md"><img src="https://img.shields.io/badge/architecture-microservices-2563eb?style=flat-square" alt="Architecture"/></a>
+  <a href="docs/diagrams/architecture/event-driven-architecture.md"><img src="https://img.shields.io/badge/communication-event--driven-ea580c?style=flat-square" alt="Communication"/></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%E2%89%A520.x-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js"/></a>
+  <a href="https://docs.docker.com/compose/"><img src="https://img.shields.io/badge/docker-compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"/></a>
+  <a href="#license"><img src="https://img.shields.io/badge/license-Academic-64748b?style=flat-square" alt="License"/></a>
+</p>
 
 ---
 
@@ -84,18 +93,70 @@ For detailed views (module, component-and-connector, deployment, runtime scenari
 
 ## Tech Stack
 
+<table>
+  <tr>
+    <td align="right"><strong>Backend</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js"/>
+      <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express"/>
+      <img src="https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white" alt="Socket.IO"/>
+      <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="right"><strong>Frontend</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React"/>
+      <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite"/>
+      <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS"/>
+      <img src="https://img.shields.io/badge/Radix_UI-161618?style=for-the-badge&logo=radixui&logoColor=white" alt="Radix UI"/>
+      <img src="https://img.shields.io/badge/Recharts-22B5BF?style=for-the-badge&logo=chartdotjs&logoColor=white" alt="Recharts"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="right"><strong>Data</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+      <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis"/>
+      <img src="https://img.shields.io/badge/InfluxDB-22ADF6?style=for-the-badge&logo=influxdb&logoColor=white" alt="InfluxDB"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="right"><strong>Messaging&nbsp;&amp;&nbsp;IoT</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white" alt="Apache Kafka"/>
+      <img src="https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white" alt="MQTT"/>
+      <img src="https://img.shields.io/badge/Eclipse_Mosquitto-3C5280?style=for-the-badge&logo=eclipsemosquitto&logoColor=white" alt="Eclipse Mosquitto"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="right"><strong>Infrastructure</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+      <img src="https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Compose"/>
+      <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx"/>
+      <img src="https://img.shields.io/badge/GNU_Make-A42E2B?style=for-the-badge&logo=gnu&logoColor=white" alt="GNU Make"/>
+    </td>
+  </tr>
+</table>
+
+<details>
+<summary><em>Detailed version map</em></summary>
+
 | Layer            | Technology                                        |
 | ---------------- | ------------------------------------------------- |
 | Backend runtime  | Node.js 20+, Express 5                            |
-| Frontend         | React 18, Vite, TailwindCSS, Radix UI, Recharts   |
-| Async messaging  | Apache Kafka (KRaft on Zookeeper), KafkaJS client |
-| IoT ingress      | Eclipse Mosquitto (MQTT 3.1.1)                    |
-| Realtime UI      | Socket.io                                         |
+| Frontend         | React 18, Vite 5, TailwindCSS 3, Radix UI, Recharts |
+| Async messaging  | Apache Kafka 7.4 (KRaft on Zookeeper), KafkaJS client |
+| IoT ingress      | Eclipse Mosquitto 2.0 (MQTT 3.1.1)                |
+| Realtime UI      | Socket.io 4.x                                     |
 | Relational store | PostgreSQL 15                                     |
 | Time-series      | InfluxDB 2.7                                      |
 | Cache            | Redis 7                                           |
 | Gateway          | Nginx (Alpine)                                    |
-| Orchestration    | Docker Compose                                    |
+| Orchestration    | Docker Compose v2                                 |
+
+</details>
 
 ## Repository Layout
 
