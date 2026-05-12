@@ -40,16 +40,47 @@ updates:
 
   # ---------------------------------------------------------------------------
   # Frontend applications — npm
+  # Grouped so tightly-coupled packages (react/react-dom, vite/plugin-react,
+  # radix-ui/*, tailwind/postcss) move together in a single PR.
   # ---------------------------------------------------------------------------
   - package-ecosystem: "npm"
     directory: "/frontend/tablet-app"
     schedule: { interval: "weekly" }
     open-pull-requests-limit: 5
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
 
   - package-ecosystem: "npm"
     directory: "/frontend/manager-dashboard"
     schedule: { interval: "weekly" }
     open-pull-requests-limit: 5
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "tailwindcss-*"
+          - "@tailwindcss/*"
+          - "postcss"
+          - "postcss-*"
+          - "autoprefixer"
 
   # ---------------------------------------------------------------------------
   # Container base images — Docker
