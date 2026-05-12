@@ -1,285 +1,152 @@
-# IRMS - Intelligent Restaurant Management System
-## Documentation Hub / Trung tâm Tài liệu
+# IRMS Documentation
 
-> **Hệ thống quản lý nhà hàng thông minh tích hợp IoT**
-> Intelligent Restaurant Management System with IoT Integration
+Architectural reference, requirements, and diagrams for the **Intelligent Restaurant Management System**.
 
----
-
-## 📋 Tổng quan / Overview
-
-IRMS là hệ thống quản lý nhà hàng thông minh được thiết kế theo kiến trúc **Microservices + Event-Driven + IoT Gateway**, nhằm tự động hóa quy trình đặt món, chế biến và quản lý vận hành nhà hàng.
-
-IRMS is an intelligent restaurant management system designed with **Microservices + Event-Driven + IoT Gateway** architecture to automate ordering, kitchen operations, and restaurant management.
-
-### Đặc điểm chính / Key Features
-
-- 🍽️ **Đặt món trực tiếp tại bàn** qua tablet/QR menu (Order directly at table)
-- 🍳 **Quản lý bếp thời gian thực** với Kitchen Display System (Real-time kitchen management)
-- 📦 **Giám sát tồn kho thông minh** bằng cảm biến IoT (Smart inventory monitoring with IoT sensors)
-- 📊 **Dashboard phân tích** cho quản lý (Analytics dashboard for managers)
-- ⚡ **Xử lý đơn hàng < 1 giây** (Order processing < 1 second)
+> Looking for setup or quick start? See the [root README](../README.md).
 
 ---
 
-## 🏗️ Kiến trúc Hệ thống / System Architecture
+## Contents
 
-### Architectural Style
-
-**Microservices + Event-Driven Architecture + IoT Gateway Layer**
-
-### 7 Microservices chính / Core Microservices
-
-1. **Customer Ordering Service** - Nhận và xác thực đơn hàng
-2. **Kitchen Management Service** - Điều phối bếp và hàng đợi
-3. **Inventory Monitoring Service** - Theo dõi tồn kho IoT
-4. **Notification & Alert Service** - Gửi thông báo và cảnh báo
-5. **Analytics & Forecasting Service** - Phân tích và dự đoán
-6. **User & Access Management Service** - Xác thực và phân quyền
-7. **IoT Gateway Service** - Quản lý thiết bị IoT
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Architecture Views](#architecture-views)
+- [Diagrams](#diagrams)
+- [Full Report](#full-report)
+- [Reading Guide](#reading-guide)
+- [Conventions](#conventions)
 
 ---
 
-## 📊 Sơ đồ Kiến trúc / Architecture Diagrams
+## Overview
 
-### 🎯 Phase 1: Foundation Diagrams (P0 - Critical)
+IRMS is structured as **Microservices + Event-Driven + IoT Gateway**. The seven backend services communicate asynchronously through Apache Kafka and synchronously through an Nginx API gateway. IoT devices ingress through Mosquitto (MQTT) and are normalized into Kafka by the iot-gateway service.
 
-| Diagram | Description | File |
-|---------|-------------|------|
-| **System Context** | Tổng quan hệ thống và actors / System boundary and actors | [📄 system-context.md](diagrams/context/system-context.md) |
-| **Microservices Overview** | Kiến trúc 7 microservices / 7 microservices architecture | [📄 microservices-overview.md](diagrams/architecture/microservices-overview.md) |
-| **Event-Driven Architecture** | Luồng sự kiện và pub/sub / Event flows and pub/sub | [📄 event-driven-architecture.md](diagrams/architecture/event-driven-architecture.md) |
-| **Order Placement Flow** | Kịch bản đặt món (S1) / Order placement scenario | [📄 order-placement-flow.md](diagrams/sequences/order-placement-flow.md) |
+The companion documentation in this directory is organized into three layers:
 
-### 🔧 Phase 2: Detailed Architecture (P1 - High Priority)
-
-| Diagram | Description | File |
-|---------|-------------|------|
-| **Kubernetes Deployment** | Triển khai cloud / Cloud deployment | [📄 kubernetes-deployment.md](diagrams/deployment/kubernetes-deployment.md) |
-| **Ordering Service Component** | Cấu trúc service đặt món / Ordering service internals | [📄 ordering-service.md](diagrams/components/ordering-service.md) |
-| **Kitchen Service Component** | Cấu trúc service bếp / Kitchen service internals | [📄 kitchen-service.md](diagrams/components/kitchen-service.md) |
-| **IoT Gateway Component** | Cấu trúc IoT Gateway / IoT Gateway internals | [📄 iot-gateway.md](diagrams/components/iot-gateway.md) |
-| **Domain Model** | Mô hình domain / Domain entities | [📄 domain-model.md](diagrams/data/domain-model.md) |
-
-### 📖 Phase 3: Complete Coverage (P2 - Medium Priority)
-
-#### Sequence Diagrams / Sơ đồ Trình tự
-
-- [📄 Kitchen Overload Scenario](diagrams/sequences/kitchen-overload-scenario.md) - Xử lý khi bếp quá tải
-- [📄 Inventory Alert Flow](diagrams/sequences/inventory-alert-flow.md) - Cảnh báo tồn kho
-- [📄 Sensor Failure Handling](diagrams/sequences/sensor-failure-handling.md) - Xử lý lỗi cảm biến
-- [📄 Analytics Dashboard Update](diagrams/sequences/analytics-dashboard-update.md) - Cập nhật dashboard
-
-#### Component Diagrams / Sơ đồ Thành phần
-
-- [📄 Inventory Service](diagrams/components/inventory-service.md)
-- [📄 Notification Service](diagrams/components/notification-service.md)
-- [📄 Analytics Service](diagrams/components/analytics-service.md)
-- [📄 Auth Service](diagrams/components/auth-service.md)
-
-#### Data Diagrams / Sơ đồ Dữ liệu
-
-- [📄 Event Schema](diagrams/data/event-schema.md) - Cấu trúc sự kiện
-- [📄 Database per Service](diagrams/data/database-per-service.md) - Cơ sở dữ liệu từng service
+1. **Requirements** — what the system must do (FR) and how well (NFR), with traceability back to architecture.
+2. **Architecture views** — six perspectives following the IEEE 1471 view-and-viewpoint model.
+3. **Diagrams** — Mermaid sources for context, components, sequences, data, and deployment.
 
 ---
 
-## 📚 Tài liệu Kiến trúc / Architecture Documentation
+## Requirements
 
-### Architecture Views
+| Document | Description |
+| --- | --- |
+| [Functional Requirements](requirements/functional-requirements.md) | FR1–FR14 — ordering, kitchen, inventory, dashboard |
+| [Non-Functional Requirements](requirements/non-functional-requirements.md) | NFR1–NFR8 — latency, availability, scalability, security |
+| [Traceability Matrix](requirements/traceability-matrix.md) | Requirements → architecture decisions → services |
 
-1. [**Overview**](architecture/01-overview.md) - Tổng quan kiến trúc / Architecture overview
-2. [**Architecture Characteristics**](architecture/02-architecture-characteristics.md) - Đặc tính kiến trúc
-3. [**Module View**](architecture/03-module-view.md) - Phân rã service / Service decomposition
-4. [**Component & Connector View**](architecture/04-component-connector-view.md) - Giao tiếp runtime
-5. [**Deployment View**](architecture/05-deployment-view.md) - Triển khai hạ tầng
-6. [**Runtime Scenarios**](architecture/06-runtime-scenarios.md) - Các kịch bản quan trọng
-
-### Main Report
-
-📄 [**report.md**](report.md) - Báo cáo chính (Vietnamese) / Main architectural report
+**Critical NFRs:** order latency < 1 s · high availability during service hours · fault tolerance for IoT devices · horizontal scalability.
 
 ---
 
-## 📋 Yêu cầu Hệ thống / System Requirements
+## Architecture Views
 
-### Functional Requirements / Yêu cầu Chức năng
+| # | View | Focus |
+| --- | --- | --- |
+| 1 | [Overview](architecture/01-overview.md) | Style selection, top-level decisions |
+| 2 | [Architecture Characteristics](architecture/02-architecture-characteristics.md) | Prioritized success criteria |
+| 3 | [Module View](architecture/03-module-view.md) | Service decomposition and ownership |
+| 4 | [Component & Connector View](architecture/04-component-connector-view.md) | Runtime structure, ports, protocols |
+| 5 | [Deployment View](architecture/05-deployment-view.md) | Containers, networks, scaling |
+| 6 | [Runtime Scenarios](architecture/06-runtime-scenarios.md) | End-to-end flows for key use cases |
 
-📄 [**Functional Requirements (FR1-FR14)**](requirements/functional-requirements.md)
+### Prioritized Architecture Characteristics
 
-**Key requirements:**
-- FR1: Khách đặt món qua tablet/QR menu
-- FR2-FR4: Xử lý đơn hàng thời gian thực
-- FR5-FR8: Quản lý bếp và hàng đợi
-- FR9-FR11: Giám sát tồn kho IoT
-- FR12-FR14: Dashboard và analytics
-
-### Non-Functional Requirements / Yêu cầu Phi Chức năng
-
-📄 [**Non-Functional Requirements (NFR1-NFR8)**](requirements/non-functional-requirements.md)
-
-**Critical NFRs:**
-- **NFR2**: Order latency < 1 second ⚡
-- **NFR3**: High availability during business hours
-- **NFR4**: Fault tolerance for IoT devices
-- **NFR6**: Horizontal scalability
-
-### Traceability
-
-📄 [**Traceability Matrix**](requirements/traceability-matrix.md) - Requirements → Architecture → Services
+| Priority | Characteristic | Rationale |
+| --- | --- | --- |
+| 1 | Real-Time Responsiveness | Sub-second order propagation |
+| 2 | Reliability & Consistency | No lost orders, consistent ticket state |
+| 3 | Scalability | Handle peak service hours |
+| 4 | Fault Tolerance (IoT) | Tolerate sensor and connectivity failures |
+| 5 | Availability | High uptime during business hours |
+| 6 | Maintainability | Independent service evolution |
+| 7 | Security | JWT auth, role-based authorization |
+| 8 | Observability | Health probes, structured logs, alerts |
 
 ---
 
-## 🎭 Actors / Người dùng
+## Diagrams
 
-| Actor | Role | Interface |
-|-------|------|-----------|
-| 👤 **Khách hàng / Customer** | Đặt món | Tablet, QR Menu |
-| 👔 **Nhân viên phục vụ / Waitstaff** | Hỗ trợ khách | Mobile App |
-| 👨‍🍳 **Nhân viên bếp / Kitchen Staff** | Chế biến món | Kitchen Display System (KDS) |
-| 👔 **Quản lý / Manager** | Giám sát vận hành | Dashboard |
-| 🌡️ **Thiết bị IoT / IoT Devices** | Thu thập dữ liệu | Load-cell, Temperature sensors |
+All diagrams are written in Mermaid and render natively on GitHub.
 
----
+### Context
 
-## 🔑 Kiến trúc Characteristics / Architecture Characteristics
+- [System Context](diagrams/context/system-context.md)
 
-### Prioritized Success Criteria
+### Architecture
 
-| Priority | Characteristic | Ý nghĩa / Meaning |
-|----------|----------------|-------------------|
-| 1 | **Real-Time Responsiveness** | Xử lý nhanh, độ trễ thấp |
-| 2 | **Reliability & Consistency** | Không mất đơn, trạng thái nhất quán |
-| 3 | **Scalability** | Mở rộng theo lượng khách |
-| 4 | **Fault Tolerance (IoT)** | Xử lý lỗi thiết bị IoT |
-| 5 | **Availability** | Uptime cao trong giờ kinh doanh |
-| 6 | **Maintainability** | Dễ bảo trì và mở rộng |
-| 7 | **Security** | Xác thực và phân quyền |
-| 8 | **Observability** | Giám sát và cảnh báo |
+- [Microservices Overview](diagrams/architecture/microservices-overview.md)
+- [Event-Driven Architecture](diagrams/architecture/event-driven-architecture.md)
 
----
+### Components
 
-## 🔄 Key Events / Sự kiện chính
+- [Ordering Service](diagrams/components/ordering-service.md)
+- [Kitchen Service](diagrams/components/kitchen-service.md)
+- [IoT Gateway](diagrams/components/iot-gateway.md)
+- [Inventory Service](diagrams/components/inventory-service.md)
+- [Notification Service](diagrams/components/notification-service.md)
+- [Analytics Service](diagrams/components/analytics-service.md)
+- [Auth Service](diagrams/components/auth-service.md)
 
-| Event | Publisher | Subscribers | Purpose |
-|-------|-----------|-------------|---------|
-| **OrderPlaced** | Ordering Service | Kitchen Service, Analytics | Đơn hàng mới |
-| **OrderInProgress** | Kitchen Service | Dashboard, Notification | Đang chế biến |
-| **OrderCompleted** | Kitchen Service | Notification, Analytics | Hoàn thành |
-| **InventoryLow** | Inventory Service | Manager Dashboard, Notification | Tồn kho thấp |
-| **TemperatureAlert** | IoT Gateway | Notification Service | Cảnh báo nhiệt độ |
+### Sequences
 
----
+- [Order Placement Flow](diagrams/sequences/order-placement-flow.md)
+- [Kitchen Overload Scenario](diagrams/sequences/kitchen-overload-scenario.md)
+- [Inventory Alert Flow](diagrams/sequences/inventory-alert-flow.md)
+- [Sensor Failure Handling](diagrams/sequences/sensor-failure-handling.md)
+- [Analytics Dashboard Update](diagrams/sequences/analytics-dashboard-update.md)
 
-## 🛠️ Technology Stack
+### Data
 
-### Backend
-- **Architecture**: Microservices + Event-Driven
-- **Communication**: REST/gRPC (sync), Event Bus (async)
-- **Message Broker**: Kafka / RabbitMQ
-- **API Gateway**: Centralized entry point
-- **Databases**: Database per service pattern
+- [Domain Model](diagrams/data/domain-model.md)
+- [Event Schema](diagrams/data/event-schema.md)
+- [Database per Service](diagrams/data/database-per-service.md)
 
-### Infrastructure
-- **Container Orchestration**: Kubernetes
-- **Cloud Platform**: Cloud-native deployment
-- **IoT Protocol**: MQTT, HTTP
+### Deployment
 
-### Observability
-- **Monitoring**: Prometheus + Grafana
-- **Logging**: Centralized logging
-- **Alerting**: Real-time alerts
+- [Kubernetes Deployment](diagrams/deployment/kubernetes-deployment.md)
 
 ---
 
-## 📖 Hướng dẫn Đọc / Reading Guide
+## Full Report
 
-### Cho người mới / For Beginners
-
-1. Start with [System Context Diagram](diagrams/context/system-context.md) - Hiểu tổng quan
-2. Read [Architecture Overview](architecture/01-overview.md) - Hiểu quyết định kiến trúc
-3. View [Microservices Diagram](diagrams/architecture/microservices-overview.md) - Hiểu cấu trúc
-4. View [Order Flow Sequence](diagrams/sequences/order-placement-flow.md) - Hiểu luồng xử lý
-
-### Cho kỹ sư / For Engineers
-
-1. Review all [Architecture Views](architecture/) - Chi tiết thiết kế
-2. Study [Component Diagrams](diagrams/components/) - Cấu trúc service
-3. Examine [Deployment Diagram](diagrams/deployment/kubernetes-deployment.md) - Hạ tầng
-4. Review [Requirements Traceability](requirements/traceability-matrix.md) - Ánh xạ yêu cầu
-
-### Cho quản lý / For Managers
-
-1. Read [Main Report](report.md) - Báo cáo tổng thể
-2. Review [Architecture Characteristics](architecture/02-architecture-characteristics.md) - Success criteria
-3. View [System Context](diagrams/context/system-context.md) - Business context
-4. Review [Functional Requirements](requirements/functional-requirements.md) - Chức năng
-
-### Khởi chạy Hệ thống / Running the System
-
-1. Quản lý, Kỹ sư truy cập [Hướng dẫn Chạy Dịch vụ Cục bộ](RUN_INSTRUCTIONS.md) (Local Service Run Instructions) - Tài liệu hướng dẫn thiết lập biến môi trường và chạy các service `auth-service`, `kitchen-service`, `ordering-service`.
+The complete architectural narrative — including ADRs, SOLID application, and a reflection — is in [`report.md`](report.md).
 
 ---
 
-## 🎯 Project Status
+## Reading Guide
 
-| Phase | Status | Completion |
-|-------|--------|------------|
-| **Requirements Analysis** | ✅ Complete | 100% |
-| **Architecture Design** | ✅ Complete | 100% |
-| **Documentation & Diagrams** | 🚧 In Progress | 25% |
-| **Implementation** | ⏳ Not Started | 0% |
-| **Testing** | ⏳ Not Started | 0% |
-| **Deployment** | ⏳ Not Started | 0% |
+**New to the project**
 
----
+1. [System Context Diagram](diagrams/context/system-context.md) — actors and boundaries.
+2. [Architecture Overview](architecture/01-overview.md) — why microservices + event-driven.
+3. [Microservices Overview](diagrams/architecture/microservices-overview.md) — the seven services at a glance.
+4. [Order Placement Flow](diagrams/sequences/order-placement-flow.md) — a representative end-to-end path.
 
-## 📝 Document Conventions
+**Engineers implementing or extending a service**
 
-### Diagram Format
-- **Tool**: Mermaid (`.md` files)
-- **Preview**: VS Code with "Mermaid Preview" extension
-- **Rendering**: Native GitHub rendering
-- **Export**: PNG/SVG for presentations
+1. The corresponding service README under [`services/`](../services/).
+2. The relevant [component diagram](diagrams/components/).
+3. [Component & Connector View](architecture/04-component-connector-view.md) for runtime contracts.
+4. [Event Schema](diagrams/data/event-schema.md) when touching Kafka.
 
-### Language
-- **Primary**: Vietnamese (for academic context)
-- **Technical terms**: English with Vietnamese translation
-- **Code/Labels**: Bilingual format
+**Stakeholders evaluating the design**
 
-### File Naming
-- `{category}-{description}.md` for diagrams
-- `{number}-{title}.md` for documentation
-- Lowercase with hyphens
+1. [`report.md`](report.md).
+2. [Architecture Characteristics](architecture/02-architecture-characteristics.md).
+3. [Traceability Matrix](requirements/traceability-matrix.md).
 
 ---
 
-## 🤝 Contributing
+## Conventions
 
-This is an academic project for the Software Architecture course (Kiến trúc phần mềm).
-
-### To add diagrams:
-1. Create `.md` file in appropriate `diagrams/` subdirectory
-2. Follow Mermaid syntax standards (see plan document)
-3. Add bilingual labels (Vietnamese + English)
-4. Include metadata header
-5. Update this README with link
+- **Diagrams:** Mermaid `.md` files; renders on GitHub or with the VS Code "Mermaid Preview" extension.
+- **File naming:** lowercase with hyphens; `NN-title.md` for ordered architecture views, `category-description.md` for diagrams.
+- **Language:** documents authored in English. Course-context discussion in [`report.md`](report.md) may include Vietnamese annotations.
 
 ---
 
-## 📞 Contact & Support
-
-**Project**: IRMS - Intelligent Restaurant Management System
-**Course**: Kiến trúc phần mềm (Software Architecture)
-**Year**: 2026
-
----
-
-## 📄 License
-
-Academic Project - For Educational Purposes
-
----
-
-**Last Updated**: 2026-02-21
-**Version**: 0.1.0 (Documentation Phase)
+<sub>Document set maintained alongside source code. See the root [`README.md`](../README.md) for the runtime quick start.</sub>

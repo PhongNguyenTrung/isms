@@ -1,12 +1,12 @@
 /**
- * simulate_iot.js — Demo script for IoT sensor simulation.
+ * simulate-iot.js — Demo script for IoT sensor simulation.
  *
  * Publishes sensor payloads to MQTT broker to trigger the full pipeline:
  *   MQTT → iot-gateway → Kafka (sensor.telemetry) → inventory-service → Kafka (alerts) → notification-service
  *
  * Usage:
- *   node simulate_iot.js               # run once
- *   node simulate_iot.js --continuous  # loop every 5 seconds
+ *   node scripts/simulate-iot.js               # run once
+ *   node scripts/simulate-iot.js --continuous  # loop every 5 seconds
  */
 const mqtt = require('mqtt');
 
