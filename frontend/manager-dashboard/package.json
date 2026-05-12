@@ -23,7 +23,7 @@
     "lucide-react": "^1.14.0",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.2.6",
     "recharts": "^3.8.1",
     "socket.io-client": "^4.7.5",
     "tailwind-merge": "^3.5.0"
