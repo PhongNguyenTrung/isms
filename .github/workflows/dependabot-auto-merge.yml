@@ -6,6 +6,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: dependabot-automerge
+  cancel-in-progress: false
+
 jobs:
   dependabot:
     runs-on: ubuntu-latest
@@ -28,7 +32,18 @@ jobs:
         # Chỉ tự động merge cho các bản cập nhật patch (sửa lỗi nhỏ) và minor (thêm tính năng nhưng không phá vỡ tương thích).
         # Nếu muốn merge tất cả, bạn có thể xóa dòng `if` bên dưới.
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: |
+          for i in {1..5}; do
+            echo "Attempt $i: Merging PR..."
+            if gh pr merge --auto --squash "$PR_URL"; then
+              echo "Successfully enabled auto-merge / merged."
+              exit 0
+            fi
+            echo "Merge failed (base branch may have changed). Waiting 10s before retry..."
+            sleep 10
+          done
+          echo "Failed to merge after 5 attempts."
+          exit 1
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
