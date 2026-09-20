@@ -64,21 +64,27 @@ export default function CartDrawer({ tableId, onClose, onOrderSuccess }) {
                   </div>
                   <div className="cart-item-controls">
                     <button
+                      type="button"
                       className="btn-qty"
                       onClick={() => updateQty(menuItem.id, quantity - 1)}
+                      aria-label={`Giảm số lượng ${menuItem.name_vi}`}
                     >
                       −
                     </button>
                     <span className="qty-value">{quantity}</span>
                     <button
+                      type="button"
                       className="btn-qty"
                       onClick={() => updateQty(menuItem.id, quantity + 1)}
+                      aria-label={`Tăng số lượng ${menuItem.name_vi}`}
                     >
                       +
                     </button>
                     <button
+                      type="button"
                       className="btn-remove"
                       onClick={() => removeItem(menuItem.id)}
+                      aria-label={`Xóa ${menuItem.name_vi} khỏi giỏ`}
                     >
                       🗑
                     </button>

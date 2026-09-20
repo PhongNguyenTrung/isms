@@ -13,7 +13,7 @@ async function resolveQRSession(token) {
   return res.json(); // { tableId, sessionToken }
 }
 
-// Kiosk setup screen — staff nhập tableId một lần
+// Kiosk setup screen: staff nhập tableId một lần
 function KioskSetup({ onSave }) {
   const [input, setInput] = useState('');
   function handleSubmit(e) {

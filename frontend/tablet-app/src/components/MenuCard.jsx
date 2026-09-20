@@ -24,7 +24,7 @@ function formatPrice(price) {
 
 export default function MenuCard({ item, onAdd }) {
   const [imgError, setImgError] = useState(false);
-  const { addItem, items } = useCart();
+  const { addItem, updateQty, items } = useCart();
 
   const cartItem = items.find((i) => i.menuItem.id === item.id);
   const qtyInCart = cartItem ? cartItem.quantity : 0;
@@ -37,10 +37,11 @@ export default function MenuCard({ item, onAdd }) {
             src={item.image_url}
             alt={item.name_vi}
             onError={() => setImgError(true)}
+            loading="lazy"
           />
         ) : (
           <div className="menu-card-image-fallback">
-            {CATEGORY_ICONS[item.category] || '🍽️'}
+            <span className="fallback-icon">{CATEGORY_ICONS[item.category] || '🍽️'}</span>
           </div>
         )}
       </div>
@@ -49,18 +50,49 @@ export default function MenuCard({ item, onAdd }) {
           {CATEGORY_LABELS[item.category] || item.category}
         </div>
         <h3 className="menu-card-name">{item.name_vi}</h3>
-        <p className="menu-card-name-en">{item.name_en}</p>
+        {item.name_en && (
+          <p className="menu-card-name-en">{item.name_en}</p>
+        )}
         {item.description && (
           <p className="menu-card-desc">{item.description}</p>
         )}
         <div className="menu-card-footer">
           <span className="menu-card-price">{formatPrice(item.price)}</span>
-          <button
-            className={`btn-add ${qtyInCart > 0 ? 'btn-add--active' : ''}`}
-            onClick={() => { addItem(item); onAdd?.(item); }}
-          >
-            {qtyInCart > 0 ? `+1 (${qtyInCart})` : '+ Thêm'}
-          </button>
+          {qtyInCart > 0 ? (
+            <div className="menu-card-stepper">
+              <button
+                type="button"
+                className="btn-stepper btn-stepper--minus"
+                onClick={() => updateQty(item.id, qtyInCart - 1)}
+                aria-label={`Giảm số lượng ${item.name_vi}`}
+              >
+                −
+              </button>
+              <span className="stepper-qty">{qtyInCart}</span>
+              <button
+                type="button"
+                className="btn-stepper btn-stepper--plus"
+                onClick={() => {
+                  addItem(item);
+                  onAdd?.(item);
+                }}
+                aria-label={`Tăng số lượng ${item.name_vi}`}
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn-add"
+              onClick={() => {
+                addItem(item);
+                onAdd?.(item);
+              }}
+            >
+              + Thêm
+            </button>
+          )}
         </div>
       </div>
     </div>

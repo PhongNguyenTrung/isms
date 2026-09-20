@@ -89,7 +89,7 @@ export default function OrderSuccess({ order: initialOrder, tableId, onNewOrder 
             <ul>
               {order.items.map((item) => (
                 <li key={item.id}>
-                  x{item.quantity} — {item.name || `Món #${item.menu_item_id}`}
+                  <strong>x{item.quantity}</strong> · {item.name || `Món #${item.menu_item_id}`}
                   {item.special_instructions && (
                     <span className="note"> ({item.special_instructions})</span>
                   )}

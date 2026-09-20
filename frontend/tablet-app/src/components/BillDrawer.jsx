@@ -130,16 +130,18 @@ export default function BillDrawer({ tableId, onClose }) {
             </div>
 
             {paymentRequested ? (
-              <div className="payment-requested-banner">
-                ✓ Nhân viên đang đến — vui lòng chờ
+              <div className="payment-requested-banner" role="status">
+                ✓ Nhân viên đang đến, vui lòng chờ trong giây lát
               </div>
             ) : (
               <button
+                type="button"
                 className="btn-primary btn-full btn-pay"
                 onClick={handleRequestPayment}
                 disabled={paymentLoading}
+                aria-label="Gọi nhân viên thanh toán"
               >
-                {paymentLoading ? 'Đang gọi...' : '💳 Gọi thanh toán'}
+                {paymentLoading ? 'Đang gọi nhân viên...' : '💳 Gọi thanh toán'}
               </button>
             )}
           </div>
